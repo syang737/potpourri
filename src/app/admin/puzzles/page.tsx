@@ -33,13 +33,20 @@ export default function AdminPuzzlesPage() {
     }
   };
 
+  const statusColors: Record<string, string> = {
+    PUBLISHED: "bg-green-500/15 text-green-400 border-green-500/20",
+    SCHEDULED: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+    DRAFT: "bg-white/10 text-gray-400 border-white/10",
+    ARCHIVED: "bg-gray-500/15 text-gray-400 border-gray-500/20",
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Manage Puzzles</h1>
+        <h1 className="text-2xl font-semibold text-white">Manage Puzzles</h1>
         <Link
           href="/admin/puzzles/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
         >
           Create Puzzle
         </Link>
@@ -47,28 +54,24 @@ export default function AdminPuzzlesPage() {
 
       <div className="space-y-3">
         {puzzles.length === 0 ? (
-          <p className="text-gray-500">No puzzles yet.</p>
+          <p className="text-gray-400">No puzzles yet.</p>
         ) : (
           puzzles.map((p) => (
             <div
               key={p.id}
-              className="bg-white p-4 rounded-lg border space-y-2"
+              className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-medium">{p.topic}</span>
-                  <span className="ml-2 text-sm text-gray-500">
+                  <span className="font-medium text-gray-100">{p.topic}</span>
+                  <span className="ml-2 text-sm text-gray-400">
                     ({p.vertical.name})
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-xs px-2 py-1 rounded ${
-                      p.status === "PUBLISHED"
-                        ? "bg-green-100 text-green-800"
-                        : p.status === "SCHEDULED"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
+                    className={`text-xs px-2 py-1 rounded-md border ${
+                      statusColors[p.status] ?? statusColors.DRAFT
                     }`}
                   >
                     {p.status}
@@ -76,17 +79,17 @@ export default function AdminPuzzlesPage() {
                   {p.status !== "PUBLISHED" && (
                     <button
                       onClick={() => handlePublish(p.id)}
-                      className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                      className="text-xs bg-green-600 hover:bg-green-500 text-white px-2.5 py-1 rounded-md transition-colors duration-150"
                     >
                       Publish
                     </button>
                   )}
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-400">
                 Scheduled: {new Date(p.scheduledFor).toLocaleDateString()}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-300">
                 Answers:{" "}
                 {p.answers.map((a) => a.answerPoolItem.label).join(", ")}
               </div>

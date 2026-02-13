@@ -127,17 +127,17 @@ export function GuessInputDropdown({
         onFocus={() => query.trim() && setShowDropdown(true)}
         disabled={disabled}
         placeholder="Type to search answers..."
-        className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="w-full p-3 bg-surface-light border border-border-light rounded-lg text-base text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
       />
       {showDropdown && suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <ul className="absolute z-10 w-full mt-1 bg-surface-light border border-border-light rounded-lg shadow-2xl max-h-60 overflow-y-auto">
           {suggestions.map((item, idx) => (
             <li
               key={item.id}
-              className={`px-4 py-2 cursor-pointer ${
+              className={`px-4 py-2.5 cursor-pointer text-sm transition-colors duration-100 ${
                 idx === highlightIndex
-                  ? "bg-blue-100 text-blue-900"
-                  : "hover:bg-gray-50"
+                  ? "bg-sky-500/20 text-sky-300"
+                  : "text-gray-200 hover:bg-white/5"
               }`}
               onMouseEnter={() => setHighlightIndex(idx)}
               onClick={() => selectItem(item)}
@@ -148,7 +148,7 @@ export function GuessInputDropdown({
         </ul>
       )}
       {showDropdown && query.trim() && suggestions.length === 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-gray-500">
+        <div className="absolute z-10 w-full mt-1 bg-surface-light border border-border-light rounded-lg shadow-2xl px-4 py-3 text-gray-400 text-sm">
           No matches -- choose from the list.
         </div>
       )}

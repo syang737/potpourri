@@ -29,27 +29,22 @@ export default function AdminLoginPage() {
 
   if (loggedIn) {
     return (
-      <div className="max-w-md mx-auto space-y-4">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <nav className="space-y-2">
-          <Link
-            href="/admin/verticals"
-            className="block p-4 bg-white rounded-lg border hover:border-blue-500 transition-colors"
-          >
-            Manage Verticals
-          </Link>
-          <Link
-            href="/admin/answer-pool"
-            className="block p-4 bg-white rounded-lg border hover:border-blue-500 transition-colors"
-          >
-            Manage Answer Pools
-          </Link>
-          <Link
-            href="/admin/puzzles"
-            className="block p-4 bg-white rounded-lg border hover:border-blue-500 transition-colors"
-          >
-            Manage Puzzles
-          </Link>
+      <div className="max-w-md mx-auto space-y-6">
+        <h1 className="text-2xl font-semibold text-white">Admin Dashboard</h1>
+        <nav className="space-y-3">
+          {[
+            { href: "/admin/verticals", label: "Manage Verticals" },
+            { href: "/admin/answer-pool", label: "Manage Answer Pools" },
+            { href: "/admin/puzzles", label: "Manage Puzzles" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block p-4 rounded-xl bg-white/5 border border-white/10 text-gray-200 hover:bg-white/10 hover:border-sky-500/30 transition-colors duration-150"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
       </div>
     );
@@ -57,10 +52,13 @@ export default function AdminLoginPage() {
 
   return (
     <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Admin Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
+      <h1 className="text-2xl font-semibold text-white mb-6">Admin Login</h1>
+      <form
+        onSubmit={handleLogin}
+        className="space-y-4 p-6 rounded-2xl bg-white/5 border border-white/10"
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
             Email
           </label>
           <input
@@ -68,11 +66,11 @@ export default function AdminLoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full p-2 border rounded-lg"
+            className="w-full p-2.5 bg-surface-light border border-border-light rounded-lg text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none transition-colors duration-150"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-300 mb-1">
             Password
           </label>
           <input
@@ -80,13 +78,17 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-2 border rounded-lg"
+            className="w-full p-2.5 bg-surface-light border border-border-light rounded-lg text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none transition-colors duration-150"
           />
         </div>
-        {error && <div className="text-red-600 text-sm">{error}</div>}
+        {error && (
+          <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            {error}
+          </div>
+        )}
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          className="w-full bg-sky-500 hover:bg-sky-400 text-white py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
         >
           Login
         </button>

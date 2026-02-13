@@ -151,10 +151,12 @@ export function PuzzleView({
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
         <VerticalBadge slug={vertical.slug} name={vertical.name} />
-        <h2 className="text-2xl font-bold text-gray-900">{puzzle.topic}</h2>
-        <div className="text-sm text-gray-500">
+        <h2 className="text-2xl md:text-3xl font-semibold text-white">
+          {puzzle.topic}
+        </h2>
+        <div className="text-sm text-gray-400">
           {numCorrect}/10 correct &middot; {numGuesses} guess
           {numGuesses !== 1 ? "es" : ""}
         </div>
@@ -175,10 +177,10 @@ export function PuzzleView({
         <div
           className={`text-center py-2 px-4 rounded-lg font-medium ${
             feedback.startsWith("Correct")
-              ? "bg-green-100 text-green-800"
+              ? "bg-green-500/15 text-green-400 border border-green-500/20"
               : feedback.startsWith("Incorrect")
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
+                ? "bg-red-500/15 text-red-400 border border-red-500/20"
+                : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20"
           }`}
         >
           {feedback}
@@ -190,7 +192,7 @@ export function PuzzleView({
       {!completed && (
         <button
           onClick={handleReveal}
-          className="w-full py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition-colors"
+          className="w-full py-3 border border-white/20 text-gray-100 hover:bg-white/10 rounded-lg font-medium transition-colors duration-150"
         >
           Reveal Answers
         </button>
@@ -199,7 +201,7 @@ export function PuzzleView({
       {completed && !showStats && (
         <button
           onClick={() => setShowStats(true)}
-          className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          className="w-full py-3 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-medium transition-colors duration-150"
         >
           View Results
         </button>

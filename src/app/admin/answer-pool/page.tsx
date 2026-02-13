@@ -80,14 +80,17 @@ export default function AdminAnswerPoolPage() {
     loadItems();
   };
 
+  const inputClass =
+    "w-full p-2.5 bg-surface-light border border-border-light rounded-lg text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none transition-colors duration-150";
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Manage Answer Pool</h1>
+    <div className="max-w-2xl mx-auto space-y-8">
+      <h1 className="text-2xl font-semibold text-white">Manage Answer Pool</h1>
 
       <select
         value={selectedVertical}
         onChange={(e) => setSelectedVertical(e.target.value)}
-        className="w-full p-2 border rounded"
+        className={inputClass}
       >
         <option value="">Select a vertical...</option>
         {verticals.map((v) => (
@@ -99,8 +102,10 @@ export default function AdminAnswerPoolPage() {
 
       {selectedVertical && (
         <>
-          <div className="bg-white p-4 rounded-lg border space-y-3">
-            <h2 className="text-lg font-semibold">Add Single Item</h2>
+          <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+            <h2 className="text-lg font-semibold text-white">
+              Add Single Item
+            </h2>
             <form onSubmit={handleAddItem} className="flex gap-2">
               <input
                 type="text"
@@ -108,51 +113,51 @@ export default function AdminAnswerPoolPage() {
                 value={newLabel}
                 onChange={(e) => setNewLabel(e.target.value)}
                 required
-                className="flex-1 p-2 border rounded"
+                className={`flex-1 ${inputClass}`}
               />
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
               >
                 Add
               </button>
             </form>
           </div>
 
-          <div className="bg-white p-4 rounded-lg border space-y-3">
-            <h2 className="text-lg font-semibold">Import CSV</h2>
+          <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+            <h2 className="text-lg font-semibold text-white">Import CSV</h2>
             <form onSubmit={handleImport} className="flex gap-2 items-end">
               <input
                 type="file"
                 accept=".csv"
                 onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
-                className="flex-1"
+                className="flex-1 text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-gray-200 file:text-sm file:font-medium hover:file:bg-white/20 file:transition-colors file:duration-150"
               />
               <button
                 type="submit"
                 disabled={!csvFile}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                className="bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium disabled:opacity-40 transition-colors duration-150"
               >
                 Import
               </button>
             </form>
             {importResult && (
-              <div className="text-sm text-green-700">{importResult}</div>
+              <div className="text-sm text-green-400">{importResult}</div>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Search items..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 p-2 border rounded"
+                className={`flex-1 ${inputClass}`}
               />
               <button
                 onClick={loadItems}
-                className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+                className="border border-white/20 text-gray-100 hover:bg-white/10 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
               >
                 Search
               </button>
@@ -160,11 +165,11 @@ export default function AdminAnswerPoolPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-white p-3 rounded border text-sm"
+                className="p-3 rounded-xl bg-white/5 border border-white/10 text-sm"
               >
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium text-gray-100">{item.label}</span>
                 {item.metadata && (
-                  <span className="text-gray-500 ml-2">
+                  <span className="text-gray-500 ml-2 text-xs">
                     {JSON.stringify(item.metadata)}
                   </span>
                 )}
