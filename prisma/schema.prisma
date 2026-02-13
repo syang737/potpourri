@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Vertical {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answerPoolItems AnswerPoolItem[]
+  puzzles         Puzzle[]
+}
+
+model AnswerPoolItem {
+  id              String   @id @default(cuid())
+  verticalId      String
+  label           String
+  normalizedLabel String   @db.Text
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  vertical      Vertical       @relation(fields: [verticalId], references: [id])
+  puzzleAnswers PuzzleAnswer[]
+  guessLogs     GuessLog[]
+
+  @@unique([verticalId, normalizedLabel])
+  @@index([verticalId, normalizedLabel])
+}
+
+model Puzzle {
+  id           String       @id @default(cuid())
+  verticalId   String
+  topic        String
+  description  String?      @db.Text
+  scheduledFor DateTime
+  status       PuzzleStatus @default(DRAFT)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  vertical  Vertical               @relation(fields: [verticalId], references: [id])
+  answers   PuzzleAnswer[]
+  guessLogs GuessLog[]
+  summaries SessionPuzzleSummary[]
+  stats     PuzzleStats?
+
+  @@index([verticalId, scheduledFor, status])
+}
+
+model PuzzleAnswer {
+  puzzleId         String
+  answerPoolItemId String
+  rank             Int
+
+  puzzle         Puzzle         @relation(fields: [puzzleId], references: [id])
+  answerPoolItem AnswerPoolItem @relation(fields: [answerPoolItemId], references: [id])
+
+  @@id([puzzleId, answerPoolItemId])
+  @@unique([puzzleId, rank])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  ipHash     String?
+
+  guessLogs GuessLog[]
+  summaries SessionPuzzleSummary[]
+}
+
+model GuessLog {
+  id               String   @id @default(cuid())
+  puzzleId         String
+  sessionId        String
+  answerPoolItemId String
+  isCorrect        Boolean
+  guessOrder       Int
+  createdAt        DateTime @default(now())
+
+  puzzle         Puzzle         @relation(fields: [puzzleId], references: [id])
+  session        Session        @relation(fields: [sessionId], references: [id])
+  answerPoolItem AnswerPoolItem @relation(fields: [answerPoolItemId], references: [id])
+
+  @@index([puzzleId, sessionId])
+  @@index([sessionId])
+}
+
+model SessionPuzzleSummary {
+  puzzleId    String
+  sessionId   String
+  numCorrect  Int       @default(0)
+  numGuesses  Int       @default(0)
+  completedAt DateTime?
+
+  puzzle  Puzzle  @relation(fields: [puzzleId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+
+  @@id([puzzleId, sessionId])
+  @@index([puzzleId])
+}
+
+model PuzzleStats {
+  puzzleId       String   @id
+  numSessions    Int      @default(0)
+  scoreHistogram Json
+  guessHistogram Json
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  puzzle Puzzle @relation(fields: [puzzleId], references: [id])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         AdminRole @default(EDITOR)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+enum PuzzleStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AdminRole {
+  EDITOR
+  ADMIN
+}
