@@ -6,140 +6,150 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: puzzleId } = await params;
-  const sessionId = await getOrCreateSession();
+  try {
+    const { id: puzzleId } = await params;
+    const sessionId = await getOrCreateSession();
 
-  const body = await request.json();
-  const { answerPoolItemId } = body;
+    const body = await request.json();
+    const { answerPoolItemId } = body;
 
-  if (!answerPoolItemId || typeof answerPoolItemId !== "string") {
-    return NextResponse.json(
-      { error: "answerPoolItemId is required" },
-      { status: 400 }
+    if (!answerPoolItemId || typeof answerPoolItemId !== "string") {
+      return NextResponse.json(
+        { error: "answerPoolItemId is required" },
+        { status: 400 }
+      );
+    }
+
+    const puzzle = await prisma.puzzle.findUnique({
+      where: { id: puzzleId },
+      include: { answers: true },
+    });
+
+    if (!puzzle || puzzle.status !== "PUBLISHED") {
+      return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
+    }
+
+    // Check the answer belongs to the same vertical
+    const answerItem = await prisma.answerPoolItem.findUnique({
+      where: { id: answerPoolItemId },
+    });
+    if (!answerItem || answerItem.verticalId !== puzzle.verticalId) {
+      return NextResponse.json(
+        { error: "Invalid answer for this puzzle" },
+        { status: 400 }
+      );
+    }
+
+    // Check if puzzle already completed for this session
+    const existingSummary = await prisma.sessionPuzzleSummary.findUnique({
+      where: { puzzleId_sessionId: { puzzleId, sessionId } },
+    });
+    if (existingSummary?.completedAt) {
+      return NextResponse.json(
+        { error: "Puzzle already completed" },
+        { status: 400 }
+      );
+    }
+
+    // Check if already guessed this answer correctly
+    const alreadyGuessed = await prisma.guessLog.findFirst({
+      where: { puzzleId, sessionId, answerPoolItemId, isCorrect: true },
+    });
+    if (alreadyGuessed) {
+      return NextResponse.json(
+        { error: "Already guessed this answer correctly" },
+        { status: 400 }
+      );
+    }
+
+    // Determine guess order
+    const guessCount = await prisma.guessLog.count({
+      where: { puzzleId, sessionId },
+    });
+
+    // Check if correct
+    const puzzleAnswer = puzzle.answers.find(
+      (a) => a.answerPoolItemId === answerPoolItemId
     );
-  }
+    const isCorrect = !!puzzleAnswer;
 
-  const puzzle = await prisma.puzzle.findUnique({
-    where: { id: puzzleId },
-    include: { answers: true },
-  });
+    // Create guess log
+    await prisma.guessLog.create({
+      data: {
+        puzzleId,
+        sessionId,
+        answerPoolItemId,
+        isCorrect,
+        guessOrder: guessCount + 1,
+      },
+    });
 
-  if (!puzzle || puzzle.status !== "PUBLISHED") {
-    return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
-  }
+    // Upsert summary
+    const currentCorrect = existingSummary?.numCorrect ?? 0;
+    const newCorrect = isCorrect ? currentCorrect + 1 : currentCorrect;
+    const newGuesses = (existingSummary?.numGuesses ?? 0) + 1;
+    const puzzleComplete = newCorrect === 10;
 
-  // Check the answer belongs to the same vertical
-  const answerItem = await prisma.answerPoolItem.findUnique({
-    where: { id: answerPoolItemId },
-  });
-  if (!answerItem || answerItem.verticalId !== puzzle.verticalId) {
-    return NextResponse.json(
-      { error: "Invalid answer for this puzzle" },
-      { status: 400 }
-    );
-  }
+    await prisma.sessionPuzzleSummary.upsert({
+      where: { puzzleId_sessionId: { puzzleId, sessionId } },
+      create: {
+        puzzleId,
+        sessionId,
+        numCorrect: isCorrect ? 1 : 0,
+        numGuesses: 1,
+        completedAt: puzzleComplete ? new Date() : null,
+      },
+      update: {
+        numCorrect: newCorrect,
+        numGuesses: newGuesses,
+        completedAt: puzzleComplete ? new Date() : undefined,
+      },
+    });
 
-  // Check if puzzle already completed for this session
-  const existingSummary = await prisma.sessionPuzzleSummary.findUnique({
-    where: { puzzleId_sessionId: { puzzleId, sessionId } },
-  });
-  if (existingSummary?.completedAt) {
-    return NextResponse.json(
-      { error: "Puzzle already completed" },
-      { status: 400 }
-    );
-  }
+    // Update puzzle stats if completed
+    if (puzzleComplete) {
+      await updatePuzzleStats(puzzleId);
+    }
 
-  // Check if already guessed this answer correctly
-  const alreadyGuessed = await prisma.guessLog.findFirst({
-    where: { puzzleId, sessionId, answerPoolItemId, isCorrect: true },
-  });
-  if (alreadyGuessed) {
-    return NextResponse.json(
-      { error: "Already guessed this answer correctly" },
-      { status: 400 }
-    );
-  }
+    // Build revealed answers
+    const allGuesses = await prisma.guessLog.findMany({
+      where: { puzzleId, sessionId, isCorrect: true },
+    });
+    const correctIds = new Set(allGuesses.map((g) => g.answerPoolItemId));
 
-  // Determine guess order
-  const guessCount = await prisma.guessLog.count({
-    where: { puzzleId, sessionId },
-  });
+    const answers = await prisma.puzzleAnswer.findMany({
+      where: { puzzleId },
+      include: { answerPoolItem: true },
+      orderBy: { rank: "asc" },
+    });
 
-  // Check if correct
-  const puzzleAnswer = puzzle.answers.find(
-    (a) => a.answerPoolItemId === answerPoolItemId
-  );
-  const isCorrect = !!puzzleAnswer;
+    const revealedAnswers = answers.map((a) => ({
+      rank: a.rank,
+      answerPoolItemId: a.answerPoolItemId,
+      label: correctIds.has(a.answerPoolItemId)
+        ? a.answerPoolItem.label
+        : null,
+      revealed: correctIds.has(a.answerPoolItemId),
+    }));
 
-  // Create guess log
-  await prisma.guessLog.create({
-    data: {
-      puzzleId,
-      sessionId,
-      answerPoolItemId,
+    return NextResponse.json({
       isCorrect,
-      guessOrder: guessCount + 1,
-    },
-  });
-
-  // Upsert summary
-  const currentCorrect = existingSummary?.numCorrect ?? 0;
-  const newCorrect = isCorrect ? currentCorrect + 1 : currentCorrect;
-  const newGuesses = (existingSummary?.numGuesses ?? 0) + 1;
-  const puzzleComplete = newCorrect === 10;
-
-  await prisma.sessionPuzzleSummary.upsert({
-    where: { puzzleId_sessionId: { puzzleId, sessionId } },
-    create: {
-      puzzleId,
-      sessionId,
-      numCorrect: isCorrect ? 1 : 0,
-      numGuesses: 1,
-      completedAt: puzzleComplete ? new Date() : null,
-    },
-    update: {
+      rank: puzzleAnswer?.rank ?? null,
+      label: isCorrect ? answerItem.label : null,
       numCorrect: newCorrect,
       numGuesses: newGuesses,
-      completedAt: puzzleComplete ? new Date() : undefined,
-    },
-  });
-
-  // Update puzzle stats if completed
-  if (puzzleComplete) {
-    await updatePuzzleStats(puzzleId);
+      puzzleComplete,
+      revealedAnswers,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("Puzzle guess POST error:", err);
+    return NextResponse.json(
+      { error: `Server error: ${message}` },
+      { status: 500 }
+    );
   }
-
-  // Build revealed answers
-  const allGuesses = await prisma.guessLog.findMany({
-    where: { puzzleId, sessionId, isCorrect: true },
-  });
-  const correctIds = new Set(allGuesses.map((g) => g.answerPoolItemId));
-
-  const answers = await prisma.puzzleAnswer.findMany({
-    where: { puzzleId },
-    include: { answerPoolItem: true },
-    orderBy: { rank: "asc" },
-  });
-
-  const revealedAnswers = answers.map((a) => ({
-    rank: a.rank,
-    answerPoolItemId: a.answerPoolItemId,
-    label: correctIds.has(a.answerPoolItemId)
-      ? a.answerPoolItem.label
-      : null,
-    revealed: correctIds.has(a.answerPoolItemId),
-  }));
-
-  return NextResponse.json({
-    isCorrect,
-    rank: puzzleAnswer?.rank ?? null,
-    label: isCorrect ? answerItem.label : null,
-    numCorrect: newCorrect,
-    numGuesses: newGuesses,
-    puzzleComplete,
-    revealedAnswers,
-  });
 }
 
 async function updatePuzzleStats(puzzleId: string) {

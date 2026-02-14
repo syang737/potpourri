@@ -7,23 +7,40 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (res.ok) {
-      setLoggedIn(true);
-    } else {
-      const data = await res.json();
-      setError(data.error || "Login failed");
+      let data: { error?: string; success?: boolean } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        // response wasn't JSON
+      }
+
+      if (res.ok) {
+        setLoggedIn(true);
+      } else {
+        setError(
+          data?.error || `Login failed (HTTP ${res.status})`
+        );
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Network error: ${msg}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,9 +105,10 @@ export default function AdminLoginPage() {
         )}
         <button
           type="submit"
-          className="w-full bg-sky-500 hover:bg-sky-400 text-white py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+          disabled={loading}
+          className="w-full bg-sky-500 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

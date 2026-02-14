@@ -8,31 +8,40 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id } = await params;
+    const query = request.nextUrl.searchParams.get("query") ?? "";
+    const page = parseInt(request.nextUrl.searchParams.get("page") ?? "1", 10);
+    const pageSize = 50;
+
+    const where: Record<string, unknown> = { verticalId: id };
+    if (query) {
+      where.normalizedLabel = { contains: query.toLowerCase().trim() };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.answerPoolItem.findMany({
+        where,
+        orderBy: { label: "asc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.answerPoolItem.count({ where }),
+    ]);
+
+    return NextResponse.json({ items, total, page, pageSize });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("Admin answer-pool GET error:", err);
+    return NextResponse.json(
+      { error: `Server error: ${message}` },
+      { status: 500 }
+    );
   }
-
-  const { id } = await params;
-  const query = request.nextUrl.searchParams.get("query") ?? "";
-  const page = parseInt(request.nextUrl.searchParams.get("page") ?? "1", 10);
-  const pageSize = 50;
-
-  const where: Record<string, unknown> = { verticalId: id };
-  if (query) {
-    where.normalizedLabel = { contains: query.toLowerCase().trim() };
-  }
-
-  const [items, total] = await Promise.all([
-    prisma.answerPoolItem.findMany({
-      where,
-      orderBy: { label: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.answerPoolItem.count({ where }),
-  ]);
-
-  return NextResponse.json({ items, total, page, pageSize });
 }
 
 export async function POST(
@@ -41,23 +50,32 @@ export async function POST(
 ) {
   try {
     await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { id: verticalId } = await params;
+    const body = await request.json();
+    const { label, metadata } = body;
+
+    if (!label || typeof label !== "string") {
+      return NextResponse.json({ error: "label is required" }, { status: 400 });
+    }
+
+    const normalizedLabel = label.toLowerCase().trim();
+
+    const item = await prisma.answerPoolItem.create({
+      data: { verticalId, label, normalizedLabel, metadata: metadata ?? null },
+    });
+
+    return NextResponse.json({ item }, { status: 201 });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("Admin answer-pool POST error:", err);
+    return NextResponse.json(
+      { error: `Server error: ${message}` },
+      { status: 500 }
+    );
   }
-
-  const { id: verticalId } = await params;
-  const body = await request.json();
-  const { label, metadata } = body;
-
-  if (!label || typeof label !== "string") {
-    return NextResponse.json({ error: "label is required" }, { status: 400 });
-  }
-
-  const normalizedLabel = label.toLowerCase().trim();
-
-  const item = await prisma.answerPoolItem.create({
-    data: { verticalId, label, normalizedLabel, metadata: metadata ?? null },
-  });
-
-  return NextResponse.json({ item }, { status: 201 });
 }
