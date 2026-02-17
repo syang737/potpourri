@@ -5,6 +5,7 @@ export interface RevealedAnswer {
   answerPoolItemId: string;
   label: string | null;
   revealed: boolean;
+  guessed?: boolean; // true only if the user correctly guessed this answer
 }
 
 export function AnswerList({

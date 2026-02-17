@@ -50,7 +50,10 @@ export function PuzzleView({
   const [numGuesses, setNumGuesses] = useState(initialState.numGuesses);
   const [completed, setCompleted] = useState(initialState.completed);
   const [answers, setAnswers] = useState<RevealedAnswer[]>(
-    initialState.revealedAnswers
+    initialState.revealedAnswers.map((a) => ({
+      ...a,
+      guessed: a.guessed ?? a.revealed, // on initial load, revealed answers were guessed
+    }))
   );
   const [lastCorrectId, setLastCorrectId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
@@ -121,7 +124,13 @@ export function PuzzleView({
       const data = await res.json();
       setNumCorrect(data.numCorrect);
       setNumGuesses(data.numGuesses);
-      setAnswers(data.revealedAnswers);
+      // During normal guessing, all revealed answers were guessed by the user
+      setAnswers(
+        data.revealedAnswers.map((a: RevealedAnswer) => ({
+          ...a,
+          guessed: a.revealed,
+        }))
+      );
       setStatsKey((k) => k + 1);
 
       if (data.isCorrect) {
@@ -161,6 +170,11 @@ export function PuzzleView({
 
   const handleReveal = async () => {
     try {
+      // Snapshot which answers the user had already guessed before revealing
+      const previouslyGuessedIds = new Set(
+        answers.filter((a) => a.revealed).map((a) => a.answerPoolItemId)
+      );
+
       const res = await fetch(`/api/puzzle/${puzzle.id}/reveal`, {
         method: "POST",
       });
@@ -171,6 +185,7 @@ export function PuzzleView({
         data.answers.map((a: { rank: number; answerPoolItemId: string; label: string }) => ({
           ...a,
           revealed: true,
+          guessed: previouslyGuessedIds.has(a.answerPoolItemId),
         }))
       );
       setTimeout(() => setShowStats(true), 500);

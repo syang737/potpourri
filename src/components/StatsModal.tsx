@@ -14,9 +14,9 @@ interface StatsModalProps {
 }
 
 function buildEmojiGrid(answers: RevealedAnswer[]): string {
-  // Each answer: green square if user guessed it, black square if not
+  // Green square if user guessed it, black square if not (even if revealed on give-up)
   return answers
-    .map((a) => (a.revealed ? "\u{1F7E9}" : "\u{2B1B}"))
+    .map((a) => (a.guessed ? "\u{1F7E9}" : "\u{2B1B}"))
     .join("");
 }
 
