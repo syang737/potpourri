@@ -11,6 +11,7 @@ interface PuzzleData {
   id: string;
   topic: string;
   description?: string | null;
+  scheduledFor?: string;
 }
 
 interface VerticalData {
@@ -52,23 +53,23 @@ export function PuzzleView({
   const [answers, setAnswers] = useState<RevealedAnswer[]>(
     initialState.revealedAnswers.map((a) => ({
       ...a,
-      guessed: a.guessed ?? a.revealed, // on initial load, revealed answers were guessed
+      guessed: a.guessed ?? a.revealed,
     }))
   );
   const [lastCorrectId, setLastCorrectId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [percentile, setPercentile] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [statsKey, setStatsKey] = useState(0); // for pulse animation
+  const [statsKey, setStatsKey] = useState(0);
 
-  // Lives system - calculate initial lives from existing incorrect guesses
+  // Lives system
   const initialIncorrect = initialState.numGuesses - initialState.numCorrect;
   const [lives, setLives] = useState(
     initialState.completed ? 0 : Math.max(0, MAX_LIVES - initialIncorrect)
   );
   const [lastLostLifeIndex, setLastLostLifeIndex] = useState<number | null>(null);
 
-  // How-to-Play panel - show if puzzle hasn't started yet
+  // How-to-Play panel
   const [showHowToPlay, setShowHowToPlay] = useState(
     !initialState.completed && initialState.numGuesses === 0
   );
@@ -124,7 +125,6 @@ export function PuzzleView({
       const data = await res.json();
       setNumCorrect(data.numCorrect);
       setNumGuesses(data.numGuesses);
-      // During normal guessing, all revealed answers were guessed by the user
       setAnswers(
         data.revealedAnswers.map((a: RevealedAnswer) => ({
           ...a,
@@ -142,7 +142,7 @@ export function PuzzleView({
         }, 1500);
       } else {
         const newLives = lives - 1;
-        setLastLostLifeIndex(newLives); // index of the life that was just lost
+        setLastLostLifeIndex(newLives);
         setLives(newLives);
         setFeedback("Incorrect!");
         setTimeout(() => {
@@ -150,7 +150,6 @@ export function PuzzleView({
           setLastLostLifeIndex(null);
         }, 1500);
 
-        // Out of lives - auto reveal
         if (newLives <= 0) {
           setTimeout(() => handleReveal(), 1000);
           return;
@@ -170,7 +169,6 @@ export function PuzzleView({
 
   const handleReveal = async () => {
     try {
-      // Snapshot which answers the user had already guessed before revealing
       const previouslyGuessedIds = new Set(
         answers.filter((a) => a.revealed).map((a) => a.answerPoolItemId)
       );
@@ -207,36 +205,36 @@ export function PuzzleView({
       <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
         <div className="text-center space-y-3">
           <VerticalBadge slug={vertical.slug} name={vertical.name} />
-          <h2 className="text-2xl md:text-3xl font-semibold text-white">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-warm-brown">
             {puzzle.topic}
           </h2>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-          <h3 className="text-lg font-semibold text-white">How to Play</h3>
-          <ul className="space-y-3 text-gray-300 text-sm">
+        <div className="p-6 rounded-2xl bg-surface border border-border shadow-sm space-y-4">
+          <h3 className="text-lg font-bold text-warm-brown">How to Play</h3>
+          <ul className="space-y-3 text-foreground/80 text-sm">
             <li className="flex gap-3">
-              <span className="text-sky-400 font-bold flex-shrink-0">1.</span>
+              <span className="text-accent font-extrabold flex-shrink-0">1.</span>
               Guess the top 10 items for today&apos;s topic using the search box.
             </li>
             <li className="flex gap-3">
-              <span className="text-sky-400 font-bold flex-shrink-0">2.</span>
-              You have <span className="font-bold text-red-400">5 lives</span> — each incorrect guess costs one life.
+              <span className="text-accent font-extrabold flex-shrink-0">2.</span>
+              You have <span className="font-bold text-error">5 lives</span> — each incorrect guess costs one life.
             </li>
             <li className="flex gap-3">
-              <span className="text-sky-400 font-bold flex-shrink-0">3.</span>
+              <span className="text-accent font-extrabold flex-shrink-0">3.</span>
               Correct guesses reveal their rank. Duplicates are not counted.
             </li>
             <li className="flex gap-3">
-              <span className="text-sky-400 font-bold flex-shrink-0">4.</span>
-              Find all 10 or run out of lives to see your results and compare with other players.
+              <span className="text-accent font-extrabold flex-shrink-0">4.</span>
+              Find all 10 or run out of lives to see your results!
             </li>
           </ul>
         </div>
 
         <button
           onClick={() => setShowHowToPlay(false)}
-          className="w-full py-4 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold text-lg transition-colors duration-150 active:scale-[0.98]"
+          className="w-full py-4 bg-accent hover:bg-accent-hover text-white rounded-2xl font-extrabold text-lg transition-colors duration-150 active:scale-[0.98] shadow-md"
         >
           Play Today&apos;s Potpourri
         </button>
@@ -249,33 +247,26 @@ export function PuzzleView({
       {/* Header */}
       <div className="text-center space-y-3">
         <VerticalBadge slug={vertical.slug} name={vertical.name} />
-        <h2 className="text-2xl md:text-3xl font-semibold text-white">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-warm-brown">
           {puzzle.topic}
         </h2>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row - Correct + Lives only */}
       <div
         key={statsKey}
-        className={`flex items-center justify-center gap-6 py-3 px-4 rounded-xl bg-white/5 border border-white/10 ${
+        className={`flex items-center justify-center gap-8 py-3 px-4 rounded-2xl bg-surface border border-border shadow-sm ${
           statsKey > 0 ? "animate-stat-pulse" : ""
         }`}
       >
         <div className="text-center">
-          <div className="text-lg font-bold text-green-400">{numCorrect}/10</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">Correct</div>
+          <div className="text-xl font-extrabold text-success">{numCorrect}/10</div>
+          <div className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider">Correct</div>
         </div>
-        <div className="w-px h-8 bg-white/10" />
-        <div className="text-center">
-          <div className="text-lg font-bold text-gray-200">{numGuesses}</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wider">
-            Guess{numGuesses !== 1 ? "es" : ""}
-          </div>
-        </div>
-        <div className="w-px h-8 bg-white/10" />
+        <div className="w-px h-8 bg-border" />
         <div className="text-center">
           <LivesIndicator lives={lives} lastLostIndex={lastLostLifeIndex} />
-          <div className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">Lives</div>
+          <div className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider mt-0.5">Lives</div>
         </div>
       </div>
 
@@ -294,12 +285,12 @@ export function PuzzleView({
       {/* Feedback */}
       {feedback && (
         <div
-          className={`text-center py-2.5 px-4 rounded-xl font-medium text-sm animate-slide-up ${
+          className={`text-center py-2.5 px-4 rounded-2xl font-bold text-sm animate-slide-up ${
             feedback.startsWith("Correct")
-              ? "bg-green-500/15 text-green-400 border border-green-500/20"
+              ? "bg-mint text-green-700 border border-green-300/40"
               : feedback.startsWith("Incorrect")
-                ? "bg-red-500/15 text-red-400 border border-red-500/20"
-                : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20"
+                ? "bg-red-50 text-red-600 border border-red-200/40"
+                : "bg-lemon text-yellow-700 border border-yellow-300/40"
           }`}
         >
           {feedback}
@@ -309,11 +300,11 @@ export function PuzzleView({
       {/* Answer list */}
       <AnswerList answers={answers} lastCorrectId={lastCorrectId} />
 
-      {/* Give Up button (replaces Reveal Answers) */}
+      {/* Give Up button */}
       {gameActive && (
         <button
           onClick={handleGiveUp}
-          className="w-full py-3.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-xl font-medium transition-all duration-150 active:scale-[0.98]"
+          className="w-full py-3.5 bg-red-50 border border-red-200/50 text-red-500 hover:bg-red-100 hover:text-red-600 rounded-2xl font-bold transition-all duration-150 active:scale-[0.98]"
         >
           Give Up?
         </button>
@@ -323,7 +314,7 @@ export function PuzzleView({
       {completed && !showStats && (
         <button
           onClick={() => setShowStats(true)}
-          className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold transition-colors duration-150 active:scale-[0.98]"
+          className="w-full py-3.5 bg-accent hover:bg-accent-hover text-white rounded-2xl font-extrabold transition-colors duration-150 active:scale-[0.98] shadow-md"
         >
           View Results
         </button>
@@ -336,6 +327,8 @@ export function PuzzleView({
         numGuesses={numGuesses}
         percentile={percentile}
         topic={puzzle.topic}
+        puzzleId={puzzle.id}
+        scheduledFor={puzzle.scheduledFor}
         answers={answers}
       />
     </div>

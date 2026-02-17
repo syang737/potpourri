@@ -24,6 +24,7 @@ export default function AdminAnswerPoolPage() {
   const [newLabel, setNewLabel] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/verticals")
@@ -81,20 +82,35 @@ export default function AdminAnswerPoolPage() {
     loadItems();
   };
 
+  const handleDelete = async (itemId: string) => {
+    if (!confirm("Remove this item from the answer pool?")) return;
+    setDeletingId(itemId);
+    try {
+      const res = await fetch(
+        `/api/admin/vertical/${selectedVertical}/answer-pool/${itemId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.id !== itemId));
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const inputClass =
-    "w-full p-2.5 bg-surface-light border border-border-light rounded-lg text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none transition-colors duration-150";
+    "w-full p-2.5 bg-surface border border-border rounded-2xl text-foreground placeholder-warm-brown/40 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-150";
+
+  const backButtonClass =
+    "flex items-center justify-center w-8 h-8 rounded-xl bg-surface border border-border text-warm-brown/50 hover:text-accent hover:bg-peach/30 transition-colors duration-150 shadow-sm";
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="flex items-center gap-3">
-        <Link
-          href="/admin"
-          className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
-          aria-label="Back to dashboard"
-        >
+        <Link href="/admin" className={backButtonClass} aria-label="Back to dashboard">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </Link>
-        <h1 className="text-2xl font-semibold text-white">Manage Answer Pool</h1>
+        <h1 className="text-2xl font-extrabold text-warm-brown">Manage Answer Pool</h1>
       </div>
 
       <select
@@ -112,10 +128,8 @@ export default function AdminAnswerPoolPage() {
 
       {selectedVertical && (
         <>
-          <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-            <h2 className="text-lg font-semibold text-white">
-              Add Single Item
-            </h2>
+          <div className="p-5 rounded-2xl bg-surface border border-border shadow-sm space-y-3">
+            <h2 className="text-lg font-extrabold text-warm-brown">Add Single Item</h2>
             <form onSubmit={handleAddItem} className="flex gap-2">
               <input
                 type="text"
@@ -127,32 +141,32 @@ export default function AdminAnswerPoolPage() {
               />
               <button
                 type="submit"
-                className="bg-sky-500 hover:bg-sky-400 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                className="bg-accent hover:bg-accent-hover text-white px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors duration-150 shadow-sm"
               >
                 Add
               </button>
             </form>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-            <h2 className="text-lg font-semibold text-white">Import CSV</h2>
+          <div className="p-5 rounded-2xl bg-surface border border-border shadow-sm space-y-3">
+            <h2 className="text-lg font-extrabold text-warm-brown">Import CSV</h2>
             <form onSubmit={handleImport} className="flex gap-2 items-end">
               <input
                 type="file"
                 accept=".csv"
                 onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
-                className="flex-1 text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white/10 file:text-gray-200 file:text-sm file:font-medium hover:file:bg-white/20 file:transition-colors file:duration-150"
+                className="flex-1 text-foreground/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-peach file:text-warm-brown file:text-sm file:font-bold hover:file:bg-peach/70 file:transition-colors file:duration-150"
               />
               <button
                 type="submit"
                 disabled={!csvFile}
-                className="bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium disabled:opacity-40 transition-colors duration-150"
+                className="bg-success hover:bg-green-500 text-white px-4 py-2.5 rounded-2xl text-sm font-bold disabled:opacity-40 transition-colors duration-150 shadow-sm"
               >
                 Import
               </button>
             </form>
             {importResult && (
-              <div className="text-sm text-green-400">{importResult}</div>
+              <div className="text-sm font-bold text-green-700 bg-mint px-3 py-2 rounded-xl">{importResult}</div>
             )}
           </div>
 
@@ -167,22 +181,33 @@ export default function AdminAnswerPoolPage() {
               />
               <button
                 onClick={loadItems}
-                className="border border-white/20 text-gray-100 hover:bg-white/10 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+                className="border border-border text-warm-brown hover:bg-peach/30 px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors duration-150"
               >
                 Search
               </button>
             </div>
+            {items.length === 0 && (
+              <p className="text-warm-brown/50 text-sm font-semibold">No items found.</p>
+            )}
             {items.map((item) => (
               <div
                 key={item.id}
-                className="p-3 rounded-xl bg-white/5 border border-white/10 text-sm"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-surface border border-border shadow-sm text-sm"
               >
-                <span className="font-medium text-gray-100">{item.label}</span>
+                <span className="flex-1 font-bold text-foreground">{item.label}</span>
                 {item.metadata && (
-                  <span className="text-gray-500 ml-2 text-xs">
+                  <span className="text-warm-brown/40 text-xs">
                     {JSON.stringify(item.metadata)}
                   </span>
                 )}
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="text-error hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-xl text-xs font-bold transition-colors duration-150 disabled:opacity-40"
+                  aria-label={`Remove ${item.label}`}
+                >
+                  {deletingId === item.id ? "..." : "Remove"}
+                </button>
               </div>
             ))}
           </div>

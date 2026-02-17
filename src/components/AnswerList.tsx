@@ -5,7 +5,7 @@ export interface RevealedAnswer {
   answerPoolItemId: string;
   label: string | null;
   revealed: boolean;
-  guessed?: boolean; // true only if the user correctly guessed this answer
+  guessed?: boolean;
 }
 
 export function AnswerList({
@@ -22,19 +22,19 @@ export function AnswerList({
         return (
           <div
             key={answer.rank}
-            className={`flex items-center gap-3 p-3 md:p-3.5 rounded-xl border transition-all duration-300 ${
+            className={`flex items-center gap-3 p-3 md:p-3.5 rounded-2xl border transition-all duration-300 ${
               answer.revealed
                 ? isJustRevealed
-                  ? "bg-green-500/15 border-green-500/30 animate-card-flip"
-                  : "bg-green-500/10 border-green-500/20"
-                : "bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.05]"
+                  ? "bg-mint border-green-300/40 animate-card-flip shadow-sm"
+                  : "bg-mint/60 border-green-200/30"
+                : "bg-surface border-border hover:bg-surface-light hover:shadow-sm"
             }`}
           >
             <span
-              className={`flex-shrink-0 w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full font-bold text-sm transition-colors duration-300 ${
+              className={`flex-shrink-0 w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full font-extrabold text-sm transition-colors duration-300 ${
                 answer.revealed
-                  ? "bg-green-500/20 text-green-400"
-                  : "bg-white/10 text-gray-500"
+                  ? "bg-success/20 text-green-700"
+                  : "bg-peach/50 text-warm-brown/50"
               }`}
             >
               {answer.rank}
@@ -42,8 +42,8 @@ export function AnswerList({
             <span
               className={`flex-1 text-sm md:text-base transition-colors duration-300 ${
                 answer.revealed
-                  ? "font-medium text-gray-100"
-                  : "text-gray-600 italic"
+                  ? "font-bold text-green-800"
+                  : "text-warm-brown/40 italic font-semibold"
               }`}
             >
               {answer.revealed ? answer.label : "???"}
@@ -59,7 +59,7 @@ export function AnswerList({
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-green-400 flex-shrink-0"
+                className="text-success flex-shrink-0"
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>

@@ -1,22 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #050816;
-  --color-foreground: #F9FAFB;
-  --color-surface: #0B1120;
-  --color-surface-light: #111827;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-light: rgba(255, 255, 255, 0.12);
-  --color-accent: #0EA5E9;
-  --color-accent-hover: #38BDF8;
-  --color-success: #22C55E;
-  --color-error: #EF4444;
+  --color-background: #FFF8F0;
+  --color-foreground: #4A3728;
+  --color-surface: #FFFFFF;
+  --color-surface-light: #FFF3E8;
+  --color-border: rgba(180, 140, 100, 0.15);
+  --color-border-light: rgba(180, 140, 100, 0.2);
+  --color-accent: #FF8B5E;
+  --color-accent-hover: #FF7043;
+  --color-success: #66BB6A;
+  --color-error: #EF5350;
+  --color-warm-brown: #8B6F5A;
+  --color-cream: #FFF8F0;
+  --color-peach: #FFE4D6;
+  --color-lavender: #E8D5F5;
+  --color-mint: #D4F0E0;
+  --color-sky-soft: #D6ECFA;
+  --color-lemon: #FFF5CC;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, sans-serif;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -72,4 +80,15 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Bouncy pop for buttons */
+@keyframes popIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop-in {
+  animation: popIn 0.3s ease-out;
 }

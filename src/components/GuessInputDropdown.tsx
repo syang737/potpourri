@@ -78,7 +78,6 @@ export function GuessInputDropdown({
   );
 
   useEffect(() => {
-    // Don't search when an item is already selected
     if (selectedItem) return;
 
     if (!query.trim()) {
@@ -117,7 +116,6 @@ export function GuessInputDropdown({
 
   const handleInputChange = (value: string) => {
     setQuery(value);
-    // If user types after selecting, clear the selection
     if (selectedItem && value !== selectedItem.label) {
       setSelectedItem(null);
     }
@@ -133,10 +131,8 @@ export function GuessInputDropdown({
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (selectedItem) {
-        // Submit the selected answer
         handleSubmit();
       } else if (suggestions.length > 0) {
-        // Select the highlighted item from dropdown
         selectItem(suggestions[highlightIndex]);
       }
     } else if (e.key === "Escape") {
@@ -156,27 +152,27 @@ export function GuessInputDropdown({
           onFocus={() => !selectedItem && query.trim() && setShowDropdown(true)}
           disabled={disabled}
           placeholder="Type to search answers..."
-          className="flex-1 p-3 md:p-3.5 bg-surface-light border border-border-light rounded-xl text-base text-gray-100 placeholder-gray-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+          className="flex-1 p-3 md:p-3.5 bg-surface border border-border rounded-2xl text-base text-foreground placeholder-warm-brown/40 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm"
         />
         <button
           onClick={handleSubmit}
           disabled={!selectedItem || disabled}
-          className="px-5 py-3 md:py-3.5 bg-accent hover:bg-accent-hover disabled:bg-white/5 disabled:text-gray-600 text-white rounded-xl font-medium text-sm transition-all duration-150 disabled:cursor-not-allowed active:scale-[0.97]"
+          className="px-5 py-3 md:py-3.5 bg-accent hover:bg-accent-hover disabled:bg-surface-light disabled:text-warm-brown/30 disabled:border disabled:border-border text-white rounded-2xl font-bold text-sm transition-all duration-150 disabled:cursor-not-allowed active:scale-[0.97] shadow-sm"
         >
           Submit
         </button>
       </div>
       {showDropdown && suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-surface-light border border-border-light rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+        <ul className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-2xl shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((item, idx) => (
             <li
               key={item.id}
-              className={`px-4 py-3 cursor-pointer text-sm transition-colors duration-100 ${
+              className={`px-4 py-3 cursor-pointer text-sm font-semibold transition-colors duration-100 ${
                 idx === highlightIndex
-                  ? "bg-sky-500/20 text-sky-300"
-                  : "text-gray-200 hover:bg-white/5"
-              } ${idx === 0 ? "rounded-t-xl" : ""} ${
-                idx === suggestions.length - 1 ? "rounded-b-xl" : ""
+                  ? "bg-peach text-accent"
+                  : "text-foreground hover:bg-surface-light"
+              } ${idx === 0 ? "rounded-t-2xl" : ""} ${
+                idx === suggestions.length - 1 ? "rounded-b-2xl" : ""
               }`}
               onMouseEnter={() => setHighlightIndex(idx)}
               onClick={() => selectItem(item)}
@@ -187,7 +183,7 @@ export function GuessInputDropdown({
         </ul>
       )}
       {showDropdown && query.trim() && suggestions.length === 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-surface-light border border-border-light rounded-xl shadow-2xl px-4 py-3 text-gray-400 text-sm">
+        <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-2xl shadow-lg px-4 py-3 text-warm-brown/50 text-sm font-semibold">
           No matches found.
         </div>
       )}
