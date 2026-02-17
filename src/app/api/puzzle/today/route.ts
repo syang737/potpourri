@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
       puzzle: {
         id: puzzle.id,
         topic: puzzle.topic,
+        description: puzzle.description,
         scheduledFor: puzzle.scheduledFor,
       },
       vertical: {

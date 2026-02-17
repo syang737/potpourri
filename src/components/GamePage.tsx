@@ -5,7 +5,7 @@ import { PuzzleView } from "./PuzzleView";
 import Link from "next/link";
 
 interface PuzzleResponse {
-  puzzle: { id: string; topic: string; scheduledFor: string };
+  puzzle: { id: string; topic: string; description?: string | null; scheduledFor: string };
   vertical: { id: string; slug: string; name: string };
   sessionState: {
     numCorrect: number;

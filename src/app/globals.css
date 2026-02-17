@@ -20,3 +20,56 @@ body {
   font-size: 16px;
   line-height: 1.6;
 }
+
+/* Card flip animation for correct guesses */
+@keyframes cardFlip {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.animate-card-flip {
+  animation: cardFlip 0.5s ease-in-out;
+}
+
+/* Life loss shake + fade */
+@keyframes lifeLoss {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(0.8); opacity: 0.5; }
+  75% { transform: scale(1.1); }
+}
+
+.animate-life-loss {
+  animation: lifeLoss 0.5s ease-in-out;
+}
+
+/* Slide up for feedback messages */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Pulse for stats update */
+@keyframes statPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.animate-stat-pulse {
+  animation: statPulse 0.3s ease-in-out;
+}
+
+/* Fade in for modals and panels */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}

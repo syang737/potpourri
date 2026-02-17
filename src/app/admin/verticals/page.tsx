@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface Vertical {
   id: string;
@@ -54,7 +55,16 @@ export default function AdminVerticalsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h1 className="text-2xl font-semibold text-white">Manage Verticals</h1>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/admin"
+          className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
+          aria-label="Back to dashboard"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </Link>
+        <h1 className="text-2xl font-semibold text-white">Manage Verticals</h1>
+      </div>
 
       <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
         <h2 className="text-lg font-semibold text-white mb-4">
