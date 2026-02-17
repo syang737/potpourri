@@ -37,8 +37,11 @@ export default function CreatePuzzlePage() {
 
   useEffect(() => {
     fetch("/api/admin/verticals")
-      .then((r) => r.json())
-      .then((d) => setVerticals(d.verticals))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load verticals");
+        return r.json();
+      })
+      .then((d) => setVerticals(d.verticals ?? []))
       .catch(() => {});
   }, []);
 

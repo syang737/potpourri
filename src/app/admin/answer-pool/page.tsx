@@ -28,8 +28,11 @@ export default function AdminAnswerPoolPage() {
 
   useEffect(() => {
     fetch("/api/admin/verticals")
-      .then((r) => r.json())
-      .then((d) => setVerticals(d.verticals))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load verticals");
+        return r.json();
+      })
+      .then((d) => setVerticals(d.verticals ?? []))
       .catch(() => {});
   }, []);
 
@@ -77,7 +80,11 @@ export default function AdminAnswerPoolPage() {
       { method: "POST", body: formData }
     );
     const data = await res.json();
-    setImportResult(`Imported: ${data.imported}, Skipped: ${data.skipped}`);
+    if (!res.ok) {
+      setImportResult(`Error: ${data.error || "Import failed"}`);
+      return;
+    }
+    setImportResult(`Imported: ${data.imported ?? 0}, Skipped: ${data.skipped ?? 0}`);
     setCsvFile(null);
     loadItems();
   };
@@ -166,7 +173,11 @@ export default function AdminAnswerPoolPage() {
               </button>
             </form>
             {importResult && (
-              <div className="text-sm font-bold text-green-700 bg-mint px-3 py-2 rounded-xl">{importResult}</div>
+              <div className={`text-sm font-bold px-3 py-2 rounded-xl ${
+                importResult.startsWith("Error")
+                  ? "text-error bg-red-50"
+                  : "text-green-700 bg-mint"
+              }`}>{importResult}</div>
             )}
           </div>
 
