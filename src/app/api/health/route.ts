@@ -2,15 +2,26 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const checks: Record<string, { ok: boolean; error?: string; ms?: number }> =
+  const checks: Record<string, { ok: boolean; error?: string; ms?: number; hint?: string }> =
     {};
 
-  // Check DATABASE_URL is set
+  const dbUrl = process.env.DATABASE_URL;
+
+  // Check DATABASE_URL is set and looks valid
   checks.env = {
-    ok: !!process.env.DATABASE_URL,
-    error: process.env.DATABASE_URL
-      ? undefined
-      : "DATABASE_URL is not set",
+    ok: !!dbUrl,
+    error: dbUrl ? undefined : "DATABASE_URL is not set",
+    // Show redacted preview: protocol + host only, mask credentials
+    hint: dbUrl
+      ? (() => {
+          try {
+            const u = new URL(dbUrl);
+            return `${u.protocol}//${u.username ? "***@" : ""}${u.host}${u.pathname}`;
+          } catch {
+            return `invalid URL (length=${dbUrl.length}, starts="${dbUrl.substring(0, 15)}...")`;
+          }
+        })()
+      : undefined,
   };
 
   // Check database connectivity
