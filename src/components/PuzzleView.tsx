@@ -203,13 +203,6 @@ export function PuzzleView({
   if (showHowToPlay) {
     return (
       <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
-        <div className="text-center space-y-3">
-          <VerticalBadge slug={vertical.slug} name={vertical.name} />
-          <h2 className="text-2xl md:text-3xl font-extrabold text-warm-brown">
-            {puzzle.topic}
-          </h2>
-        </div>
-
         <div className="p-6 rounded-2xl bg-surface border border-border shadow-sm space-y-4">
           <h3 className="text-lg font-bold text-warm-brown">How to Play</h3>
           <ul className="space-y-3 text-foreground/80 text-sm">
@@ -219,7 +212,7 @@ export function PuzzleView({
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">2.</span>
-              You have <span className="font-bold text-error">5 lives</span> — each incorrect guess costs one life.
+              Incorrect guesses cost a life. You only get <span className="font-bold text-error whitespace-nowrap">5 lives</span>.
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">3.</span>
