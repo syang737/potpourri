@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 import { PotMascot } from "@/components/PotMascot";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Potpourri - Daily Top Ten Trivia",
@@ -47,6 +48,7 @@ export default function RootLayout({
             Potpourri &mdash; Daily Top Ten Trivia
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
