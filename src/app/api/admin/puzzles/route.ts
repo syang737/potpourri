@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate ranks 1-10
-    const ranks = answers.map((a: { rank: number }) => a.rank).sort();
+    const ranks = answers.map((a: { rank: number }) => a.rank).sort((a: number, b: number) => a - b);
     const expectedRanks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     if (JSON.stringify(ranks) !== JSON.stringify(expectedRanks)) {
       return NextResponse.json(

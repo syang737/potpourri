@@ -87,6 +87,16 @@ export default function CreatePuzzlePage() {
     });
   };
 
+  const moveAnswer = (idx: number, direction: "up" | "down") => {
+    setSelectedAnswers((prev) => {
+      const next = [...prev];
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= next.length) return prev;
+      [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+      return next.map((a, i) => ({ ...a, rank: i + 1 }));
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -233,7 +243,7 @@ export default function CreatePuzzlePage() {
               {selectedAnswers.map((a, idx) => (
                 <div
                   key={a.answerPoolItemId}
-                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-surface-light border border-border"
+                  className="flex items-center gap-1.5 p-2.5 rounded-2xl bg-surface-light border border-border"
                 >
                   <span className="w-6 text-center font-extrabold text-warm-brown/40 text-sm">
                     {a.rank}
@@ -243,8 +253,26 @@ export default function CreatePuzzlePage() {
                   </span>
                   <button
                     type="button"
+                    onClick={() => moveAnswer(idx, "up")}
+                    disabled={idx === 0}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-warm-brown/40 hover:text-accent hover:bg-peach/30 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-warm-brown/40 transition-colors duration-150"
+                    aria-label="Move up"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveAnswer(idx, "down")}
+                    disabled={idx === selectedAnswers.length - 1}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-warm-brown/40 hover:text-accent hover:bg-peach/30 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-warm-brown/40 transition-colors duration-150"
+                    aria-label="Move down"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => removeAnswer(idx)}
-                    className="text-error hover:text-red-600 text-xs font-bold transition-colors duration-150"
+                    className="text-error hover:text-red-600 text-xs font-bold transition-colors duration-150 ml-1"
                   >
                     Remove
                   </button>

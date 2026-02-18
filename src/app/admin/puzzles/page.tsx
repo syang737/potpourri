@@ -85,12 +85,20 @@ export default function AdminPuzzlesPage() {
                     {p.status}
                   </span>
                   {p.status !== "PUBLISHED" && (
-                    <button
-                      onClick={() => handlePublish(p.id)}
-                      className="text-xs bg-success hover:bg-green-500 text-white px-2.5 py-1 rounded-lg font-bold transition-colors duration-150"
-                    >
-                      Publish
-                    </button>
+                    <>
+                      <Link
+                        href={`/admin/puzzles/${p.id}/edit`}
+                        className="text-xs border border-border text-warm-brown hover:bg-peach/30 px-2.5 py-1 rounded-lg font-bold transition-colors duration-150"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handlePublish(p.id)}
+                        className="text-xs bg-success hover:bg-green-500 text-white px-2.5 py-1 rounded-lg font-bold transition-colors duration-150"
+                      >
+                        Publish
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
