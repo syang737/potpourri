@@ -103,7 +103,7 @@ export default function AdminPuzzlesPage() {
                 </div>
               </div>
               <div className="text-sm text-warm-brown/50 font-semibold">
-                Scheduled: {new Date(p.scheduledFor).toLocaleDateString()}
+                Scheduled: {new Date(p.scheduledFor).toLocaleDateString(undefined, { timeZone: "UTC" })}
               </div>
               <div className="text-sm text-foreground/70 font-semibold">
                 Answers:{" "}
