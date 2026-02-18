@@ -208,7 +208,7 @@ export function PuzzleView({
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">2.</span>
-              Incorrect guesses cost a life. You only get <span className="font-bold text-error">5 lives</span>.
+              <span>Incorrect guesses cost a life. You only get <span className="font-bold text-error">5 lives</span>.</span>
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">3.</span>
