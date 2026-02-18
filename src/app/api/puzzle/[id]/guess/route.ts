@@ -130,6 +130,7 @@ export async function POST(
         ? a.answerPoolItem.label
         : null,
       revealed: correctIds.has(a.answerPoolItemId),
+      guessed: correctIds.has(a.answerPoolItemId),
     }));
 
     return NextResponse.json({

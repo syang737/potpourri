@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
         ? a.answerPoolItem.label
         : null,
       revealed: isCompleted || correctGuessIds.has(a.answerPoolItemId),
+      guessed: correctGuessIds.has(a.answerPoolItemId),
     }));
 
     return NextResponse.json({

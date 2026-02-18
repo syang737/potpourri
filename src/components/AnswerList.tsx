@@ -23,32 +23,38 @@ export function AnswerList({
           <div
             key={answer.rank}
             className={`flex items-center gap-3 p-3 md:p-3.5 rounded-2xl border transition-all duration-300 ${
-              answer.revealed
+              answer.guessed
                 ? isJustRevealed
                   ? "bg-mint border-green-300/40 animate-card-flip shadow-sm"
                   : "bg-mint/60 border-green-200/30"
-                : "bg-surface border-border hover:bg-surface-light hover:shadow-sm"
+                : answer.revealed
+                  ? "bg-surface-light border-border"
+                  : "bg-surface border-border hover:bg-surface-light hover:shadow-sm"
             }`}
           >
             <span
               className={`flex-shrink-0 w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full font-extrabold text-sm transition-colors duration-300 ${
-                answer.revealed
+                answer.guessed
                   ? "bg-success/20 text-green-700"
-                  : "bg-peach/50 text-warm-brown/50"
+                  : answer.revealed
+                    ? "bg-warm-brown/10 text-warm-brown/50"
+                    : "bg-peach/50 text-warm-brown/50"
               }`}
             >
               {answer.rank}
             </span>
             <span
               className={`flex-1 text-sm md:text-base transition-colors duration-300 ${
-                answer.revealed
+                answer.guessed
                   ? "font-bold text-green-800"
-                  : "text-warm-brown/40 italic font-semibold"
+                  : answer.revealed
+                    ? "font-semibold text-warm-brown/60"
+                    : "text-warm-brown/40 italic font-semibold"
               }`}
             >
               {answer.revealed ? answer.label : "???"}
             </span>
-            {answer.revealed && (
+            {answer.guessed && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

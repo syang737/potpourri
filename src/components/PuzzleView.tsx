@@ -128,7 +128,7 @@ export function PuzzleView({
       setAnswers(
         data.revealedAnswers.map((a: RevealedAnswer) => ({
           ...a,
-          guessed: a.revealed,
+          guessed: a.guessed ?? a.revealed,
         }))
       );
       setStatsKey((k) => k + 1);

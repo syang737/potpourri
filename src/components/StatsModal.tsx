@@ -17,7 +17,7 @@ interface StatsModalProps {
 
 function buildEmojiGrid(answers: RevealedAnswer[]): string {
   return answers
-    .map((a) => (a.guessed ? "\u{1F7E9}" : "\u{2B1B}"))
+    .map((a) => (a.guessed ? "\u{1F7E9}" : "\u{2B1C}"))
     .join("");
 }
 
@@ -30,9 +30,9 @@ function getSummaryMessage(numCorrect: number): string {
 }
 
 function formatDate(dateStr?: string): string {
-  if (!dateStr) return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (!dateStr) return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 export function StatsModal({
