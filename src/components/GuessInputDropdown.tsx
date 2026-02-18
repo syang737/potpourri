@@ -11,7 +11,6 @@ interface AnswerOption {
 
 interface GuessInputDropdownProps {
   verticalSlug: string;
-  dataSource: "client" | "server";
   clientOptions?: AnswerOption[];
   onSubmitGuess: (answerPoolItemId: string) => void;
   disabled?: boolean;
@@ -19,8 +18,6 @@ interface GuessInputDropdownProps {
 }
 
 export function GuessInputDropdown({
-  verticalSlug,
-  dataSource,
   clientOptions,
   onSubmitGuess,
   disabled,
@@ -32,7 +29,6 @@ export function GuessInputDropdown({
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AnswerOption | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const filterClientOptions = useCallback(
     (q: string) => {
@@ -54,29 +50,6 @@ export function GuessInputDropdown({
     [clientOptions, guessedIds]
   );
 
-  const searchServer = useCallback(
-    async (q: string) => {
-      if (!q.trim()) {
-        setSuggestions([]);
-        return;
-      }
-      try {
-        const res = await fetch(
-          `/api/vertical/${verticalSlug}/search?query=${encodeURIComponent(q)}&limit=20`
-        );
-        const data = await res.json();
-        const filtered = (data.items as AnswerOption[]).filter(
-          (o) => !guessedIds.has(o.id)
-        );
-        setSuggestions(filtered);
-        setHighlightIndex(0);
-      } catch {
-        setSuggestions([]);
-      }
-    },
-    [verticalSlug, guessedIds]
-  );
-
   useEffect(() => {
     if (selectedItem) return;
 
@@ -87,14 +60,8 @@ export function GuessInputDropdown({
     }
 
     setShowDropdown(true);
-
-    if (dataSource === "client") {
-      filterClientOptions(query);
-    } else {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => searchServer(query), 250);
-    }
-  }, [query, dataSource, filterClientOptions, searchServer, selectedItem]);
+    filterClientOptions(query);
+  }, [query, filterClientOptions, selectedItem]);
 
   const selectItem = (item: AnswerOption) => {
     setSelectedItem(item);
