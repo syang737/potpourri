@@ -34,7 +34,6 @@ interface AnswerOption {
 }
 
 const MAX_LIVES = 5;
-const SMALL_POOL_VERTICALS = ["countries", "languages"];
 
 export function PuzzleView({
   puzzle: initialPuzzle,
@@ -74,22 +73,19 @@ export function PuzzleView({
     !initialState.completed && initialState.numGuesses === 0
   );
 
-  // Pool for small verticals
+  // Answer pool loaded once for client-side search (cached on server + browser)
   const [clientPool, setClientPool] = useState<AnswerOption[] | undefined>();
-  const isSmallPool = SMALL_POOL_VERTICALS.includes(vertical.slug);
 
   const guessedIds = new Set(
     answers.filter((a) => a.revealed).map((a) => a.answerPoolItemId)
   );
 
   useEffect(() => {
-    if (isSmallPool) {
-      fetch(`/api/vertical/${vertical.slug}/pool`)
-        .then((res) => res.json())
-        .then((data) => setClientPool(data.items))
-        .catch(() => {});
-    }
-  }, [vertical.slug, isSmallPool]);
+    fetch(`/api/vertical/${vertical.slug}/pool`)
+      .then((res) => res.json())
+      .then((data) => setClientPool(data.items))
+      .catch(() => {});
+  }, [vertical.slug]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -263,7 +259,6 @@ export function PuzzleView({
       {gameActive && (
         <GuessInputDropdown
           verticalSlug={vertical.slug}
-          dataSource={isSmallPool ? "client" : "server"}
           clientOptions={clientPool}
           onSubmitGuess={handleGuess}
           disabled={completed}
