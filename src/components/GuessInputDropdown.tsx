@@ -110,7 +110,8 @@ export function GuessInputDropdown({
       setQuery("");
       setSuggestions([]);
       setShowDropdown(false);
-      inputRef.current?.focus();
+      const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+      if (!isTouchDevice) inputRef.current?.focus();
     }
   };
 

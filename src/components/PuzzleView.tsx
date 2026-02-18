@@ -135,18 +135,14 @@ export function PuzzleView({
 
       if (data.isCorrect) {
         setLastCorrectId(answerPoolItemId);
-        setFeedback(`Correct! #${data.rank}: ${data.label}`);
         setTimeout(() => {
-          setFeedback(null);
           setLastCorrectId(null);
         }, 1500);
       } else {
         const newLives = lives - 1;
         setLastLostLifeIndex(newLives);
         setLives(newLives);
-        setFeedback("Incorrect!");
         setTimeout(() => {
-          setFeedback(null);
           setLastLostLifeIndex(null);
         }, 1500);
 
