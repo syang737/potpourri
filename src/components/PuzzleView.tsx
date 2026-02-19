@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { VerticalBadge } from "./VerticalBadge";
 import { GuessInputDropdown } from "./GuessInputDropdown";
 import { AnswerList, RevealedAnswer } from "./AnswerList";
@@ -11,6 +11,7 @@ interface PuzzleData {
   id: string;
   topic: string;
   description?: string | null;
+  source?: string | null;
   scheduledFor?: string;
 }
 
@@ -191,6 +192,21 @@ export function PuzzleView({
     handleReveal();
   };
 
+  // Source info popup
+  const [showSource, setShowSource] = useState(false);
+  const sourceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showSource) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sourceRef.current && !sourceRef.current.contains(e.target as Node)) {
+        setShowSource(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSource]);
+
   const gameActive = !completed && lives > 0;
 
   // How-to-Play panel
@@ -234,9 +250,35 @@ export function PuzzleView({
       {/* Header */}
       <div className="text-center space-y-3">
         <VerticalBadge slug={vertical.slug} name={vertical.name} />
-        <h2 className="text-2xl md:text-3xl font-extrabold text-warm-brown">
-          {puzzle.topic}
-        </h2>
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-warm-brown">
+            {puzzle.topic}
+          </h2>
+          {puzzle.source && (
+            <div className="relative" ref={sourceRef}>
+              <button
+                onClick={() => setShowSource((v) => !v)}
+                className="flex items-center justify-center w-6 h-6 rounded-full text-warm-brown/40 hover:text-accent hover:bg-peach/30 transition-colors duration-150"
+                aria-label="View source"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              </button>
+              {showSource && (
+                <div className="absolute z-20 top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-4 bg-surface border border-border rounded-2xl shadow-lg text-left">
+                  <p className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider mb-2">Source</p>
+                  <a
+                    href={puzzle.source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-accent hover:text-accent-hover underline underline-offset-2 break-all transition-colors duration-150"
+                  >
+                    {puzzle.source}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats row - Correct + Lives only */}

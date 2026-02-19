@@ -57,11 +57,12 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { topic, description, scheduledFor, status, answers } = body;
+    const { topic, description, source, scheduledFor, status, answers } = body;
 
     const data: Record<string, unknown> = {};
     if (topic) data.topic = topic;
     if (description !== undefined) data.description = description;
+    if (source !== undefined) data.source = source;
     if (scheduledFor) data.scheduledFor = new Date(scheduledFor);
     if (status && ["DRAFT", "SCHEDULED"].includes(status)) data.status = status;
 

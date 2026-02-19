@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const { verticalId, topic, description, scheduledFor, status, answers } = body;
+    const { verticalId, topic, description, source, scheduledFor, status, answers } = body;
 
     if (!verticalId || !topic || !scheduledFor || !answers) {
       return NextResponse.json(
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         verticalId,
         topic,
         description,
+        source,
         scheduledFor: new Date(scheduledFor),
         status: puzzleStatus,
         answers: {

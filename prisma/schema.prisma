@@ -41,6 +41,7 @@ model Puzzle {
   verticalId   String
   topic        String
   description  String?      @db.Text
+  source       String?      @db.Text
   scheduledFor DateTime
   status       PuzzleStatus @default(DRAFT)
   createdAt    DateTime     @default(now())

@@ -19,6 +19,7 @@ interface PuzzleData {
   id: string;
   topic: string;
   description: string | null;
+  source: string | null;
   scheduledFor: string;
   status: string;
   verticalId: string;
@@ -35,6 +36,7 @@ export default function EditPuzzlePage() {
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
+  const [source, setSource] = useState("");
   const [scheduledFor, setScheduledFor] = useState("");
   const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +56,7 @@ export default function EditPuzzlePage() {
         setPuzzle(p);
         setTopic(p.topic);
         setDescription(p.description ?? "");
+        setSource(p.source ?? "");
         setScheduledFor(new Date(p.scheduledFor).toISOString().split("T")[0]);
         setSelectedAnswers(
           p.answers.map((a) => ({
@@ -130,6 +133,7 @@ export default function EditPuzzlePage() {
       body: JSON.stringify({
         topic,
         description: description || null,
+        source: source || null,
         scheduledFor: new Date(scheduledFor).toISOString(),
         answers: selectedAnswers.map((a) => ({
           answerPoolItemId: a.answerPoolItemId,
@@ -209,6 +213,19 @@ export default function EditPuzzlePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Admin notes / source"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-warm-brown/70 mb-1">
+            Source URL (optional)
+          </label>
+          <input
+            type="url"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            placeholder="https://example.com/source"
             className={inputClass}
           />
         </div>
