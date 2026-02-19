@@ -49,13 +49,6 @@ export async function PUT(
       return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
     }
 
-    if (puzzle.status !== "DRAFT" && puzzle.status !== "SCHEDULED") {
-      return NextResponse.json(
-        { error: "Can only edit DRAFT or SCHEDULED puzzles" },
-        { status: 400 }
-      );
-    }
-
     const body = await request.json();
     const { topic, description, source, scheduledFor, status, answers } = body;
 
