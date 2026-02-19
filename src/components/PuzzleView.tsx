@@ -58,6 +58,7 @@ export function PuzzleView({
   const [lastCorrectId, setLastCorrectId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [percentile, setPercentile] = useState<number | null>(null);
+  const [scoreHistogram, setScoreHistogram] = useState<Record<string, number> | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [statsKey, setStatsKey] = useState(0);
 
@@ -92,6 +93,7 @@ export function PuzzleView({
       const res = await fetch(`/api/puzzle/${puzzle.id}/stats`);
       const data = await res.json();
       setPercentile(data.percentile);
+      setScoreHistogram(data.scoreHistogram ?? null);
     } catch {
       /* ignore */
     }
@@ -310,6 +312,7 @@ export function PuzzleView({
         numCorrect={numCorrect}
         numGuesses={numGuesses}
         percentile={percentile}
+        scoreHistogram={scoreHistogram}
         topic={puzzle.topic}
         puzzleId={puzzle.id}
         scheduledFor={puzzle.scheduledFor}

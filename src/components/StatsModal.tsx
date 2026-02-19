@@ -9,6 +9,7 @@ interface StatsModalProps {
   numCorrect: number;
   numGuesses: number;
   percentile: number | null;
+  scoreHistogram: Record<string, number> | null;
   topic: string;
   puzzleId: string;
   scheduledFor?: string;
@@ -35,12 +36,69 @@ function formatDate(dateStr?: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
+function ScoreHistogram({
+  histogram,
+  userScore,
+  percentile,
+}: {
+  histogram: Record<string, number>;
+  userScore: number;
+  percentile: number | null;
+}) {
+  const buckets = Array.from({ length: 11 }, (_, i) => ({
+    score: i,
+    count: histogram[String(i)] ?? 0,
+  }));
+
+  const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider text-center">
+        Score Distribution
+      </div>
+      <div className="flex items-end gap-[3px] sm:gap-1 h-24 px-1">
+        {buckets.map(({ score, count }) => {
+          const isUser = score === userScore;
+          const heightPct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+          return (
+            <div key={score} className="flex-1 flex flex-col items-center gap-0.5 min-w-0">
+              <div className="w-full relative" style={{ height: "80px" }}>
+                <div
+                  className={`absolute bottom-0 w-full rounded-t transition-all duration-500 ${
+                    isUser ? "bg-accent" : "bg-warm-brown/20"
+                  }`}
+                  style={{ height: `${Math.max(heightPct, 3)}%` }}
+                />
+              </div>
+              <div
+                className={`text-[10px] sm:text-xs font-bold leading-none ${
+                  isUser ? "text-accent" : "text-warm-brown/40"
+                }`}
+              >
+                {score}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {percentile !== null && (
+        <div className="text-center text-sm font-bold text-warm-brown mt-1">
+          Better than{" "}
+          <span className="text-accent">{percentile}%</span> of players
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StatsModal({
   isOpen,
   onClose,
   numCorrect,
   numGuesses,
   percentile,
+  scoreHistogram,
   topic,
   puzzleId,
   scheduledFor,
@@ -93,8 +151,19 @@ export function StatsModal({
           </div>
         </div>
 
-        {/* Percentile */}
-        {percentile !== null && (
+        {/* Score histogram */}
+        {scoreHistogram && (
+          <div className="py-3 px-4 rounded-2xl bg-peach/30 border border-accent/20">
+            <ScoreHistogram
+              histogram={scoreHistogram}
+              userScore={numCorrect}
+              percentile={percentile}
+            />
+          </div>
+        )}
+
+        {/* Percentile fallback (no histogram data) */}
+        {!scoreHistogram && percentile !== null && (
           <div className="text-center text-base font-bold text-warm-brown py-2.5 px-4 rounded-2xl bg-peach/50 border border-accent/20">
             Better than{" "}
             <span className="text-accent">{percentile}%</span> of
