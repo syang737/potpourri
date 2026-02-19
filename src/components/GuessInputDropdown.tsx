@@ -43,6 +43,12 @@ export function GuessInputDropdown({
             !guessedIds.has(o.id) &&
             queries.some((query) => o.normalizedLabel.includes(query))
         )
+        .sort((a, b) => {
+          const aStarts = queries.some((query) => a.normalizedLabel.startsWith(query));
+          const bStarts = queries.some((query) => b.normalizedLabel.startsWith(query));
+          if (aStarts !== bStarts) return aStarts ? -1 : 1;
+          return a.normalizedLabel.localeCompare(b.normalizedLabel);
+        })
         .slice(0, 20);
       setSuggestions(filtered);
       setHighlightIndex(0);
