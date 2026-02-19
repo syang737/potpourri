@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateSession } from "@/lib/session";
+import { updatePuzzleStats } from "@/lib/puzzle-stats";
 
 export async function POST(
   request: NextRequest,
@@ -151,36 +152,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
-
-async function updatePuzzleStats(puzzleId: string) {
-  const summaries = await prisma.sessionPuzzleSummary.findMany({
-    where: { puzzleId, completedAt: { not: null } },
-  });
-
-  const scoreHistogram: Record<string, number> = {};
-  const guessHistogram: Record<string, number> = {};
-  for (let i = 0; i <= 10; i++) scoreHistogram[String(i)] = 0;
-
-  for (const s of summaries) {
-    const key = String(s.numCorrect);
-    scoreHistogram[key] = (scoreHistogram[key] ?? 0) + 1;
-    const gKey = String(s.numGuesses);
-    guessHistogram[gKey] = (guessHistogram[gKey] ?? 0) + 1;
-  }
-
-  await prisma.puzzleStats.upsert({
-    where: { puzzleId },
-    create: {
-      puzzleId,
-      numSessions: summaries.length,
-      scoreHistogram,
-      guessHistogram,
-    },
-    update: {
-      numSessions: summaries.length,
-      scoreHistogram,
-      guessHistogram,
-    },
-  });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateSession } from "@/lib/session";
+import { updatePuzzleStats } from "@/lib/puzzle-stats";
 
 export async function POST(
   _request: NextRequest,
@@ -47,6 +48,8 @@ export async function POST(
         },
       });
     }
+
+    await updatePuzzleStats(puzzleId);
 
     const answers = puzzle.answers.map((a) => ({
       rank: a.rank,
