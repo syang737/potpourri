@@ -53,6 +53,7 @@ export async function GET(
         id: puzzle.id,
         topic: puzzle.topic,
         description: puzzle.description,
+        source: puzzle.source,
         scheduledFor: puzzle.scheduledFor,
       },
       vertical: {

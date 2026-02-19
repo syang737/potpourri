@@ -27,6 +27,7 @@ export default function CreatePuzzlePage() {
   const [verticalId, setVerticalId] = useState("");
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
+  const [source, setSource] = useState("");
   const [scheduledFor, setScheduledFor] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -113,6 +114,7 @@ export default function CreatePuzzlePage() {
         verticalId,
         topic,
         description: description || null,
+        source: source || null,
         scheduledFor: new Date(scheduledFor).toISOString(),
         status: "SCHEDULED",
         answers: selectedAnswers.map((a) => ({
@@ -193,6 +195,19 @@ export default function CreatePuzzlePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Admin notes / source"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-warm-brown/70 mb-1">
+            Source URL (optional)
+          </label>
+          <input
+            type="url"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            placeholder="https://example.com/source"
             className={inputClass}
           />
         </div>
