@@ -27,9 +27,11 @@ export function GamePage({ verticalSlug }: { verticalSlug?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const url = verticalSlug
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const base = verticalSlug
       ? `/api/puzzle/today?vertical=${verticalSlug}`
       : "/api/puzzle/today";
+    const url = `${base}${base.includes("?") ? "&" : "?"}tz=${encodeURIComponent(tz)}`;
 
     fetch(url)
       .then((res) => {
