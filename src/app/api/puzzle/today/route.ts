@@ -6,11 +6,17 @@ export async function GET(request: NextRequest) {
   try {
     const sessionId = await getOrCreateSession();
     const verticalSlug = request.nextUrl.searchParams.get("vertical");
+    const tz = request.nextUrl.searchParams.get("tz") || "UTC";
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Compute "today" in the user's local timezone
+    const nowInTz = new Date(
+      new Date().toLocaleString("en-US", { timeZone: tz })
+    );
+    const today = new Date(
+      Date.UTC(nowInTz.getFullYear(), nowInTz.getMonth(), nowInTz.getDate())
+    );
     const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
     const where: Record<string, unknown> = {
       status: "PUBLISHED",
