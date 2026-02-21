@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { AdminAnalytics } from "@/components/AdminAnalytics";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -66,7 +67,7 @@ export default function AdminLoginPage() {
 
   if (loggedIn) {
     return (
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-8">
         <h1 className="text-2xl font-extrabold text-warm-brown">Admin Dashboard</h1>
         <nav className="space-y-3">
           {[
@@ -83,6 +84,8 @@ export default function AdminLoginPage() {
             </Link>
           ))}
         </nav>
+
+        <AdminAnalytics />
       </div>
     );
   }
