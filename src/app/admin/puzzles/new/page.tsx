@@ -34,6 +34,7 @@ export default function CreatePuzzlePage() {
   const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PoolItem[]>([]);
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function CreatePuzzlePage() {
     if (res.ok) {
       const data = await res.json();
       setSearchResults(data.items);
+      setHighlightIndex(0);
     }
   }, [verticalId, searchQuery]);
 
@@ -79,6 +81,25 @@ export default function CreatePuzzlePage() {
     ]);
     setSearchQuery("");
     setSearchResults([]);
+    setHighlightIndex(0);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (!searchResults.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.min(prev + 1, searchResults.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (searchResults[highlightIndex]) {
+        addAnswer(searchResults[highlightIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setSearchResults([]);
+    }
   };
 
   const removeAnswer = (idx: number) => {
@@ -236,16 +257,22 @@ export default function CreatePuzzlePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder="Search answer pool..."
                 className={inputClass}
               />
               {searchResults.length > 0 && (
                 <ul className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-2xl shadow-lg max-h-40 overflow-y-auto">
-                  {searchResults.map((item) => (
+                  {searchResults.map((item, idx) => (
                     <li
                       key={item.id}
                       onClick={() => addAnswer(item)}
-                      className="px-4 py-2.5 hover:bg-peach cursor-pointer text-sm font-semibold text-foreground transition-colors duration-100"
+                      onMouseEnter={() => setHighlightIndex(idx)}
+                      className={`px-4 py-2.5 cursor-pointer text-sm font-semibold transition-colors duration-100 ${
+                        idx === highlightIndex
+                          ? "bg-peach text-accent"
+                          : "text-foreground hover:bg-peach"
+                      }`}
                     >
                       {item.label}
                     </li>
