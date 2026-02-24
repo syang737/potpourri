@@ -41,6 +41,7 @@ export default function EditPuzzlePage() {
   const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PoolItem[]>([]);
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -81,6 +82,7 @@ export default function EditPuzzlePage() {
     if (res.ok) {
       const data = await res.json();
       setSearchResults(data.items);
+      setHighlightIndex(0);
     }
   }, [puzzle?.verticalId, searchQuery]);
 
@@ -98,6 +100,28 @@ export default function EditPuzzlePage() {
     ]);
     setSearchQuery("");
     setSearchResults([]);
+    setHighlightIndex(0);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    const filtered = searchResults.filter(
+      (r) => !selectedAnswers.some((a) => a.answerPoolItemId === r.id)
+    );
+    if (!filtered.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered[highlightIndex]) {
+        addAnswer(filtered[highlightIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setSearchResults([]);
+    }
   };
 
   const removeAnswer = (idx: number) => {
@@ -252,6 +276,7 @@ export default function EditPuzzlePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder="Search answer pool to add..."
                 className={inputClass}
               />
@@ -259,11 +284,16 @@ export default function EditPuzzlePage() {
                 <ul className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-2xl shadow-lg max-h-40 overflow-y-auto">
                   {searchResults
                     .filter((r) => !selectedAnswers.some((a) => a.answerPoolItemId === r.id))
-                    .map((item) => (
+                    .map((item, idx) => (
                       <li
                         key={item.id}
                         onClick={() => addAnswer(item)}
-                        className="px-4 py-2.5 hover:bg-peach cursor-pointer text-sm font-semibold text-foreground transition-colors duration-100"
+                        onMouseEnter={() => setHighlightIndex(idx)}
+                        className={`px-4 py-2.5 cursor-pointer text-sm font-semibold transition-colors duration-100 ${
+                          idx === highlightIndex
+                            ? "bg-peach text-accent"
+                            : "text-foreground hover:bg-peach"
+                        }`}
                       >
                         {item.label}
                       </li>
