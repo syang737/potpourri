@@ -19,9 +19,9 @@ export async function POST(
       return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
     }
 
-    if (puzzle.answers.length !== 10) {
+    if (puzzle.answers.length < 1) {
       return NextResponse.json(
-        { error: "Puzzle must have exactly 10 answers to publish" },
+        { error: "Puzzle must have at least 1 answer to publish" },
         { status: 400 }
       );
     }
@@ -38,13 +38,17 @@ export async function POST(
       },
     });
 
-    // Initialize puzzle stats
+    // Initialize puzzle stats with dynamic score histogram based on answer count
+    const scoreHistogram: Record<string, number> = {};
+    for (let i = 0; i <= puzzle.answers.length; i++) {
+      scoreHistogram[String(i)] = 0;
+    }
     await prisma.puzzleStats.upsert({
       where: { puzzleId: id },
       create: {
         puzzleId: id,
         numSessions: 0,
-        scoreHistogram: { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 },
+        scoreHistogram,
         guessHistogram: {},
       },
       update: {},

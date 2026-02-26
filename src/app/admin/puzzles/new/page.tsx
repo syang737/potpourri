@@ -68,7 +68,7 @@ export default function CreatePuzzlePage() {
   }, [searchPool]);
 
   const addAnswer = (item: PoolItem) => {
-    if (selectedAnswers.length >= 10) return;
+    if (selectedAnswers.length >= 25) return;
     if (selectedAnswers.some((a) => a.answerPoolItemId === item.id)) return;
 
     setSelectedAnswers((prev) => [
@@ -123,8 +123,8 @@ export default function CreatePuzzlePage() {
     e.preventDefault();
     setError(null);
 
-    if (selectedAnswers.length !== 10) {
-      setError("Exactly 10 answers are required");
+    if (selectedAnswers.length < 1 || selectedAnswers.length > 25) {
+      setError("Between 1 and 25 answers are required");
       return;
     }
 
@@ -249,7 +249,7 @@ export default function CreatePuzzlePage() {
         {verticalId && (
           <div className="space-y-3">
             <label className="block text-sm font-bold text-warm-brown/70">
-              Answers ({selectedAnswers.length}/10)
+              Answers ({selectedAnswers.length}/25)
             </label>
 
             <div className="relative">

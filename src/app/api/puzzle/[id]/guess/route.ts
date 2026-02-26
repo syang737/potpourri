@@ -89,7 +89,8 @@ export async function POST(
     const currentCorrect = existingSummary?.numCorrect ?? 0;
     const newCorrect = isCorrect ? currentCorrect + 1 : currentCorrect;
     const newGuesses = (existingSummary?.numGuesses ?? 0) + 1;
-    const puzzleComplete = newCorrect === 10;
+    const totalAnswers = puzzle.answers.length;
+    const puzzleComplete = newCorrect === totalAnswers;
 
     await prisma.sessionPuzzleSummary.upsert({
       where: { puzzleId_sessionId: { puzzleId, sessionId } },
