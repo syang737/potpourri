@@ -52,15 +52,38 @@ export async function POST(
       );
     }
 
-    // Check if already guessed this answer correctly
+    // Check if already guessed this answer (correct or incorrect)
     const alreadyGuessed = await prisma.guessLog.findFirst({
-      where: { puzzleId, sessionId, answerPoolItemId, isCorrect: true },
+      where: { puzzleId, sessionId, answerPoolItemId },
     });
     if (alreadyGuessed) {
-      return NextResponse.json(
-        { error: "Already guessed this answer correctly" },
-        { status: 400 }
-      );
+      // Return duplicate flag without penalizing
+      const allGuesses = await prisma.guessLog.findMany({
+        where: { puzzleId, sessionId, isCorrect: true },
+      });
+      const correctIds = new Set(allGuesses.map((g) => g.answerPoolItemId));
+      const currentAnswers = await prisma.puzzleAnswer.findMany({
+        where: { puzzleId },
+        include: { answerPoolItem: true },
+        orderBy: { rank: "asc" },
+      });
+      const revealedAnswers = currentAnswers.map((a) => ({
+        rank: a.rank,
+        answerPoolItemId: a.answerPoolItemId,
+        label: correctIds.has(a.answerPoolItemId)
+          ? a.answerPoolItem.label
+          : null,
+        revealed: correctIds.has(a.answerPoolItemId),
+        guessed: correctIds.has(a.answerPoolItemId),
+      }));
+      return NextResponse.json({
+        duplicate: true,
+        isCorrect: alreadyGuessed.isCorrect,
+        numCorrect: existingSummary?.numCorrect ?? 0,
+        numGuesses: existingSummary?.numGuesses ?? 0,
+        puzzleComplete: false,
+        revealedAnswers,
+      });
     }
 
     // Determine guess order

@@ -39,6 +39,7 @@ const MAX_LIVES = 5;
 // Toast messages
 const CORRECT_TOASTS = ["Nice!", "Got it!", "On the board!", "Nailed it!", "Yes!"];
 const INCORRECT_TOASTS = ["Nope", "Not quite", "Try again", "Off the mark", "Swing and a miss"];
+const DUPLICATE_TOASTS = ["Already guessed!", "You tried that one!", "Pick something new!"];
 const STREAK_TOASTS: Record<number, string> = {
   3: "3 in a row!",
   4: "On fire!",
@@ -178,8 +179,18 @@ export function PuzzleView({
   const [showStats, setShowStats] = useState(false);
   const [percentile, setPercentile] = useState<number | null>(null);
   const [scoreHistogram, setScoreHistogram] = useState<Record<string, number> | null>(null);
-  const [toast, setToast] = useState<{ text: string; type: "correct" | "incorrect" } | null>(null);
+  const [toast, setToast] = useState<{ text: string; type: "correct" | "incorrect" | "duplicate" } | null>(null);
   const [statsKey, setStatsKey] = useState(0);
+
+  // Track all attempted answer IDs to prevent duplicate guesses
+  const [attemptedIds, setAttemptedIds] = useState<Set<string>>(() => {
+    // Initialize with already-guessed correct IDs from session state
+    return new Set(
+      initialState.revealedAnswers
+        .filter((a) => a.guessed)
+        .map((a) => a.answerPoolItemId)
+    );
+  });
 
   // Screen flash
   const [flash, setFlash] = useState<"correct" | "incorrect" | null>(null);
@@ -276,12 +287,18 @@ export function PuzzleView({
     }
   }, [completed, fetchStats]);
 
-  const showToastMsg = (text: string, type: "correct" | "incorrect") => {
+  const showToastMsg = (text: string, type: "correct" | "incorrect" | "duplicate") => {
     setToast({ text, type });
-    setTimeout(() => setToast(null), 1200);
+    setTimeout(() => setToast(null), 2400);
   };
 
   const handleGuess = async (answerPoolItemId: string) => {
+    // Client-side duplicate check
+    if (attemptedIds.has(answerPoolItemId)) {
+      showToastMsg(getRandomToast(DUPLICATE_TOASTS), "duplicate");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/puzzle/${puzzle.id}/guess`, {
         method: "POST",
@@ -296,6 +313,17 @@ export function PuzzleView({
       }
 
       const data = await res.json();
+
+      // Server-side duplicate fallback
+      if (data.duplicate) {
+        setAttemptedIds((prev) => new Set(prev).add(answerPoolItemId));
+        showToastMsg(getRandomToast(DUPLICATE_TOASTS), "duplicate");
+        return;
+      }
+
+      // Track this attempt
+      setAttemptedIds((prev) => new Set(prev).add(answerPoolItemId));
+
       setNumCorrect(data.numCorrect);
       setNumGuesses(data.numGuesses);
       setAnswers(
@@ -312,7 +340,7 @@ export function PuzzleView({
 
         // Screen flash green
         setFlash("correct");
-        setTimeout(() => setFlash(null), 250);
+        setTimeout(() => setFlash(null), 500);
 
         // Sound + haptics
         playSound("correct");
@@ -320,17 +348,17 @@ export function PuzzleView({
 
         // Lives pulse green
         setLivesPulse(true);
-        setTimeout(() => setLivesPulse(false), 400);
+        setTimeout(() => setLivesPulse(false), 800);
 
         // Answer row animation
         setLastCorrectId(answerPoolItemId);
-        setTimeout(() => setLastCorrectId(null), 1500);
+        setTimeout(() => setLastCorrectId(null), 3000);
 
         // Confetti on 1st, middle, and last answer
         const midpoint = Math.ceil(totalAnswers / 2);
         if (data.numCorrect === 1 || data.numCorrect === midpoint || data.numCorrect === totalAnswers) {
           setConfetti(true);
-          setTimeout(() => setConfetti(false), 1200);
+          setTimeout(() => setConfetti(false), 2400);
         }
 
         // Toast with streaks
@@ -342,8 +370,8 @@ export function PuzzleView({
         // Screen flash red + shake
         setFlash("incorrect");
         setShake(true);
-        setTimeout(() => setFlash(null), 250);
-        setTimeout(() => setShake(false), 150);
+        setTimeout(() => setFlash(null), 500);
+        setTimeout(() => setShake(false), 300);
 
         // Sound + haptics
         playSound("incorrect");
@@ -351,7 +379,7 @@ export function PuzzleView({
 
         // Input wobble
         setInputWobble(true);
-        setTimeout(() => setInputWobble(false), 400);
+        setTimeout(() => setInputWobble(false), 800);
 
         // Toast
         showToastMsg(getRandomToast(INCORRECT_TOASTS), "incorrect");
@@ -359,7 +387,7 @@ export function PuzzleView({
         const newLives = lives - 1;
         setLastLostLifeIndex(newLives);
         setLives(newLives);
-        setTimeout(() => setLastLostLifeIndex(null), 1500);
+        setTimeout(() => setLastLostLifeIndex(null), 3000);
 
         if (newLives <= 0) {
           setTimeout(() => handleReveal(), 1000);
@@ -467,7 +495,7 @@ export function PuzzleView({
           className={`fixed inset-0 pointer-events-none z-40 ${
             flash === "correct" ? "bg-green-400/15" : "bg-red-400/15"
           }`}
-          style={{ animation: "flashFade 250ms ease-out forwards" }}
+          style={{ animation: "flashFade 500ms ease-out forwards" }}
         />
       )}
 
@@ -477,7 +505,7 @@ export function PuzzleView({
           className="fixed inset-0 pointer-events-none z-40"
           style={{
             background: "radial-gradient(circle at center, rgba(102,187,106,0.15) 0%, transparent 60%)",
-            animation: "flashFade 300ms ease-out forwards",
+            animation: "flashFade 600ms ease-out forwards",
           }}
         />
       )}
@@ -574,7 +602,9 @@ export function PuzzleView({
           className={`text-center py-2 px-4 rounded-2xl font-bold text-sm animate-toast ${
             toast.type === "correct"
               ? "bg-mint text-green-700 border border-green-300/40"
-              : "bg-red-50 text-red-600 border border-red-200/40"
+              : toast.type === "duplicate"
+                ? "bg-lemon text-amber-700 border border-amber-300/40"
+                : "bg-red-50 text-red-600 border border-red-200/40"
           }`}
         >
           {toast.text}
