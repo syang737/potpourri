@@ -109,7 +109,7 @@ body {
 }
 
 .animate-shake {
-  animation: shake 0.15s ease-in-out;
+  animation: shake 0.3s ease-in-out;
 }
 
 /* Input wobble on incorrect */
@@ -123,7 +123,7 @@ body {
 }
 
 .animate-wobble {
-  animation: wobble 0.4s ease-out;
+  animation: wobble 0.8s ease-out;
 }
 
 /* Toast appear */
@@ -135,7 +135,7 @@ body {
 }
 
 .animate-toast {
-  animation: toast 1.2s ease-in-out forwards;
+  animation: toast 2.4s ease-in-out forwards;
 }
 
 /* Correct answer row highlight */
@@ -146,7 +146,7 @@ body {
 }
 
 .animate-answer-correct {
-  animation: answerCorrect 0.6s ease-out;
+  animation: answerCorrect 1.2s ease-out;
 }
 
 /* Reveal animation for give-up */
@@ -156,7 +156,7 @@ body {
 }
 
 .animate-answer-reveal {
-  animation: answerReveal 0.3s ease-out;
+  animation: answerReveal 0.6s ease-out;
 }
 
 /* Lives pulse green on correct */
@@ -166,5 +166,5 @@ body {
 }
 
 .animate-lives-pulse {
-  animation: livesPulse 0.4s ease-in-out;
+  animation: livesPulse 0.8s ease-in-out;
 }
