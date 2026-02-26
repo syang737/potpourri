@@ -6,14 +6,13 @@ export async function GET(request: NextRequest) {
   try {
     const sessionId = await getOrCreateSession();
     const verticalSlug = request.nextUrl.searchParams.get("vertical");
-    const tz = request.nextUrl.searchParams.get("tz") || "UTC";
 
-    // Compute "today" in the user's local timezone
-    const nowInTz = new Date(
-      new Date().toLocaleString("en-US", { timeZone: tz })
+    // Compute "today" in US Eastern time
+    const nowET = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
     );
     const today = new Date(
-      Date.UTC(nowInTz.getFullYear(), nowInTz.getMonth(), nowInTz.getDate())
+      Date.UTC(nowET.getFullYear(), nowET.getMonth(), nowET.getDate())
     );
     const tomorrow = new Date(today);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
