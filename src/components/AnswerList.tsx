@@ -11,24 +11,29 @@ export interface RevealedAnswer {
 export function AnswerList({
   answers,
   lastCorrectId,
+  justRevealedId,
 }: {
   answers: RevealedAnswer[];
   lastCorrectId?: string | null;
+  justRevealedId?: string | null;
 }) {
   return (
     <div className="space-y-2">
       {answers.map((answer) => {
-        const isJustRevealed = lastCorrectId === answer.answerPoolItemId;
+        const isJustCorrect = lastCorrectId === answer.answerPoolItemId;
+        const isJustRevealed = justRevealedId === answer.answerPoolItemId;
         return (
           <div
             key={answer.rank}
             className={`flex items-center gap-3 p-3 md:p-3.5 rounded-2xl border transition-all duration-300 ${
               answer.guessed
-                ? isJustRevealed
-                  ? "bg-mint border-green-300/40 animate-card-flip shadow-sm"
+                ? isJustCorrect
+                  ? "bg-mint border-green-400/60 shadow-md animate-answer-correct"
                   : "bg-mint/60 border-green-200/30"
                 : answer.revealed
-                  ? "bg-surface-light border-border"
+                  ? isJustRevealed
+                    ? "bg-surface-light border-border animate-answer-reveal"
+                    : "bg-surface-light border-border"
                   : "bg-surface border-border hover:bg-surface-light hover:shadow-sm"
             }`}
           >

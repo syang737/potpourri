@@ -7,6 +7,7 @@ interface StatsModalProps {
   isOpen: boolean;
   onClose: () => void;
   numCorrect: number;
+  totalAnswers: number;
   numGuesses: number;
   percentile: number | null;
   scoreHistogram: Record<string, number> | null;
@@ -22,11 +23,12 @@ function buildEmojiGrid(answers: RevealedAnswer[]): string {
     .join("");
 }
 
-function getSummaryMessage(numCorrect: number): string {
-  if (numCorrect === 10) return "Perfect score!";
-  if (numCorrect >= 8) return "Impressive!";
-  if (numCorrect >= 5) return "Nice work!";
-  if (numCorrect >= 3) return "Good effort!";
+function getSummaryMessage(numCorrect: number, totalAnswers: number): string {
+  if (numCorrect === totalAnswers) return "Perfect score!";
+  const pct = numCorrect / totalAnswers;
+  if (pct >= 0.8) return "Impressive!";
+  if (pct >= 0.5) return "Nice work!";
+  if (pct >= 0.3) return "Good effort!";
   return "Better luck next time!";
 }
 
@@ -39,13 +41,15 @@ function formatDate(dateStr?: string): string {
 function ScoreHistogram({
   histogram,
   userScore,
+  totalAnswers,
   percentile,
 }: {
   histogram: Record<string, number>;
   userScore: number;
+  totalAnswers: number;
   percentile: number | null;
 }) {
-  const buckets = Array.from({ length: 11 }, (_, i) => ({
+  const buckets = Array.from({ length: totalAnswers + 1 }, (_, i) => ({
     score: i,
     count: histogram[String(i)] ?? 0,
   }));
@@ -96,6 +100,7 @@ export function StatsModal({
   isOpen,
   onClose,
   numCorrect,
+  totalAnswers,
   numGuesses,
   percentile,
   scoreHistogram,
@@ -116,7 +121,7 @@ export function StatsModal({
 
   const shareText = [
     `Potpourri ${dateLabel}`,
-    `${emojiGrid} ${numCorrect}/10`,
+    `${emojiGrid} ${numCorrect}/${totalAnswers}`,
     gameUrl,
   ].join("\n");
 
@@ -136,7 +141,7 @@ export function StatsModal({
         {/* Summary message */}
         <div className="text-center">
           <div className="text-xl font-extrabold text-warm-brown mb-1">
-            {getSummaryMessage(numCorrect)}
+            {getSummaryMessage(numCorrect, totalAnswers)}
           </div>
           <div className="text-sm font-semibold text-warm-brown/50">{dateLabel}</div>
         </div>
@@ -144,7 +149,7 @@ export function StatsModal({
         {/* Score */}
         <div className="text-center space-y-2">
           <div className="text-5xl font-extrabold text-success">
-            {numCorrect}/10
+            {numCorrect}/{totalAnswers}
           </div>
           <div className="text-warm-brown/60 font-semibold">
             in {numGuesses} guess{numGuesses !== 1 ? "es" : ""}
@@ -157,6 +162,7 @@ export function StatsModal({
             <ScoreHistogram
               histogram={scoreHistogram}
               userScore={numCorrect}
+              totalAnswers={totalAnswers}
               percentile={percentile}
             />
           </div>

@@ -36,6 +36,122 @@ interface AnswerOption {
 
 const MAX_LIVES = 5;
 
+// Toast messages
+const CORRECT_TOASTS = ["Nice!", "Got it!", "On the board!", "Nailed it!", "Yes!"];
+const INCORRECT_TOASTS = ["Nope", "Not quite", "Try again", "Off the mark", "Swing and a miss"];
+const STREAK_TOASTS: Record<number, string> = {
+  3: "3 in a row!",
+  4: "On fire!",
+  5: "Hot streak!",
+};
+
+function getRandomToast(arr: string[]) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Confetti particle
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  rotation: number;
+  rotSpeed: number;
+}
+
+function ConfettiBurst({ active }: { active: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    const colors = ["#FF8B5E", "#66BB6A", "#FFD54F", "#42A5F5", "#AB47BC", "#EF5350"];
+    const particles: Particle[] = [];
+
+    for (let i = 0; i < 60; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 6;
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 4 + Math.random() * 4,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 15,
+      });
+    }
+
+    let frame = 0;
+    const maxFrames = 60;
+    let rafId: number;
+
+    const animate = () => {
+      frame++;
+      if (frame > maxFrames) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const opacity = 1 - frame / maxFrames;
+
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.15;
+        p.rotation += p.rotSpeed;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      }
+
+      rafId = requestAnimationFrame(animate);
+    };
+
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-30"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
+}
+
+// Progress bar
+function ProgressBar({ found, total }: { found: number; total: number }) {
+  return (
+    <div className="flex gap-[2px] h-2 rounded-full overflow-hidden bg-warm-brown/10">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`flex-1 transition-all duration-300 ${
+            i < found ? "bg-success" : "bg-transparent"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function PuzzleView({
   puzzle: initialPuzzle,
   vertical: initialVertical,
@@ -47,6 +163,7 @@ export function PuzzleView({
 }) {
   const [puzzle] = useState(initialPuzzle);
   const [vertical] = useState(initialVertical);
+  const totalAnswers = initialState.revealedAnswers.length;
   const [numCorrect, setNumCorrect] = useState(initialState.numCorrect);
   const [numGuesses, setNumGuesses] = useState(initialState.numGuesses);
   const [completed, setCompleted] = useState(initialState.completed);
@@ -57,11 +174,63 @@ export function PuzzleView({
     }))
   );
   const [lastCorrectId, setLastCorrectId] = useState<string | null>(null);
+  const [justRevealedId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [percentile, setPercentile] = useState<number | null>(null);
   const [scoreHistogram, setScoreHistogram] = useState<Record<string, number> | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ text: string; type: "correct" | "incorrect" } | null>(null);
   const [statsKey, setStatsKey] = useState(0);
+
+  // Screen flash
+  const [flash, setFlash] = useState<"correct" | "incorrect" | null>(null);
+  // Screen shake
+  const [shake, setShake] = useState(false);
+  // Confetti
+  const [confetti, setConfetti] = useState(false);
+  // Streak tracking
+  const [streak, setStreak] = useState(0);
+  // Input wobble on incorrect
+  const [inputWobble, setInputWobble] = useState(false);
+
+  // Sound
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
+  const playSound = useCallback((type: "correct" | "incorrect") => {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      if (type === "correct") {
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.value = 0.12;
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      } else {
+        osc.type = "square";
+        osc.frequency.value = 220;
+        gain.gain.value = 0.08;
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      }
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (type === "correct" ? 0.15 : 0.2));
+    } catch {
+      // Audio not available
+    }
+  }, [soundEnabled]);
+
+  const triggerHaptic = useCallback((type: "correct" | "incorrect") => {
+    if (!navigator.vibrate) return;
+    if (type === "correct") {
+      navigator.vibrate(30);
+    } else {
+      navigator.vibrate([20, 30, 20]);
+    }
+  }, []);
 
   // Lives system
   const initialIncorrect = initialState.numGuesses - initialState.numCorrect;
@@ -69,13 +238,14 @@ export function PuzzleView({
     initialState.completed ? 0 : Math.max(0, MAX_LIVES - initialIncorrect)
   );
   const [lastLostLifeIndex, setLastLostLifeIndex] = useState<number | null>(null);
+  const [livesPulse, setLivesPulse] = useState(false);
 
   // How-to-Play panel
   const [showHowToPlay, setShowHowToPlay] = useState(
     !initialState.completed && initialState.numGuesses === 0
   );
 
-  // Answer pool loaded once for client-side search (cached on server + browser)
+  // Answer pool loaded once for client-side search
   const [clientPool, setClientPool] = useState<AnswerOption[] | undefined>();
 
   const guessedIds = new Set(
@@ -106,6 +276,11 @@ export function PuzzleView({
     }
   }, [completed, fetchStats]);
 
+  const showToastMsg = (text: string, type: "correct" | "incorrect") => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 1200);
+  };
+
   const handleGuess = async (answerPoolItemId: string) => {
     try {
       const res = await fetch(`/api/puzzle/${puzzle.id}/guess`, {
@@ -116,8 +291,7 @@ export function PuzzleView({
 
       if (!res.ok) {
         const err = await res.json();
-        setFeedback(err.error || "Error submitting guess");
-        setTimeout(() => setFeedback(null), 2000);
+        showToastMsg(err.error || "Error", "incorrect");
         return;
       }
 
@@ -133,17 +307,59 @@ export function PuzzleView({
       setStatsKey((k) => k + 1);
 
       if (data.isCorrect) {
+        const newStreak = streak + 1;
+        setStreak(newStreak);
+
+        // Screen flash green
+        setFlash("correct");
+        setTimeout(() => setFlash(null), 250);
+
+        // Sound + haptics
+        playSound("correct");
+        triggerHaptic("correct");
+
+        // Lives pulse green
+        setLivesPulse(true);
+        setTimeout(() => setLivesPulse(false), 400);
+
+        // Answer row animation
         setLastCorrectId(answerPoolItemId);
-        setTimeout(() => {
-          setLastCorrectId(null);
-        }, 1500);
+        setTimeout(() => setLastCorrectId(null), 1500);
+
+        // Confetti on 1st, middle, and last answer
+        const midpoint = Math.ceil(totalAnswers / 2);
+        if (data.numCorrect === 1 || data.numCorrect === midpoint || data.numCorrect === totalAnswers) {
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 1200);
+        }
+
+        // Toast with streaks
+        const streakMsg = STREAK_TOASTS[newStreak];
+        showToastMsg(streakMsg || getRandomToast(CORRECT_TOASTS), "correct");
       } else {
+        setStreak(0);
+
+        // Screen flash red + shake
+        setFlash("incorrect");
+        setShake(true);
+        setTimeout(() => setFlash(null), 250);
+        setTimeout(() => setShake(false), 150);
+
+        // Sound + haptics
+        playSound("incorrect");
+        triggerHaptic("incorrect");
+
+        // Input wobble
+        setInputWobble(true);
+        setTimeout(() => setInputWobble(false), 400);
+
+        // Toast
+        showToastMsg(getRandomToast(INCORRECT_TOASTS), "incorrect");
+
         const newLives = lives - 1;
         setLastLostLifeIndex(newLives);
         setLives(newLives);
-        setTimeout(() => {
-          setLastLostLifeIndex(null);
-        }, 1500);
+        setTimeout(() => setLastLostLifeIndex(null), 1500);
 
         if (newLives <= 0) {
           setTimeout(() => handleReveal(), 1000);
@@ -157,8 +373,7 @@ export function PuzzleView({
         setTimeout(() => setShowStats(true), 1000);
       }
     } catch {
-      setFeedback("Network error");
-      setTimeout(() => setFeedback(null), 2000);
+      showToastMsg("Network error", "incorrect");
     }
   };
 
@@ -183,8 +398,7 @@ export function PuzzleView({
       );
       setTimeout(() => setShowStats(true), 500);
     } catch {
-      setFeedback("Error revealing answers");
-      setTimeout(() => setFeedback(null), 2000);
+      showToastMsg("Error revealing answers", "incorrect");
     }
   };
 
@@ -218,7 +432,7 @@ export function PuzzleView({
           <ul className="space-y-3 text-foreground/80 text-sm">
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">1.</span>
-              Guess the top 10 items for today&apos;s topic using the search box.
+              Guess the top {totalAnswers} items for today&apos;s topic using the search box.
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">2.</span>
@@ -230,7 +444,7 @@ export function PuzzleView({
             </li>
             <li className="flex gap-3">
               <span className="text-accent font-extrabold flex-shrink-0">4.</span>
-              Find all 10 or run out of lives to see your results!
+              Find all {totalAnswers} or run out of lives to see your results!
             </li>
           </ul>
         </div>
@@ -246,7 +460,31 @@ export function PuzzleView({
   }
 
   return (
-    <div className="max-w-lg mx-auto space-y-5">
+    <div className={`relative max-w-lg mx-auto space-y-5 ${shake ? "animate-shake" : ""}`}>
+      {/* Screen flash overlay */}
+      {flash && (
+        <div
+          className={`fixed inset-0 pointer-events-none z-40 ${
+            flash === "correct" ? "bg-green-400/15" : "bg-red-400/15"
+          }`}
+          style={{ animation: "flashFade 250ms ease-out forwards" }}
+        />
+      )}
+
+      {/* Correct glow */}
+      {flash === "correct" && (
+        <div
+          className="fixed inset-0 pointer-events-none z-40"
+          style={{
+            background: "radial-gradient(circle at center, rgba(102,187,106,0.15) 0%, transparent 60%)",
+            animation: "flashFade 300ms ease-out forwards",
+          }}
+        />
+      )}
+
+      {/* Confetti */}
+      <ConfettiBurst active={confetti} />
+
       {/* Header */}
       <div className="text-center space-y-3">
         <VerticalBadge slug={vertical.slug} name={vertical.name} />
@@ -281,52 +519,70 @@ export function PuzzleView({
         </div>
       </div>
 
-      {/* Stats row - Correct + Lives only */}
+      {/* Stats row */}
       <div
         key={statsKey}
-        className={`flex items-center justify-center gap-8 py-3 px-4 rounded-2xl bg-surface border border-border shadow-sm ${
+        className={`flex items-center justify-center gap-6 py-3 px-4 rounded-2xl bg-surface border border-border shadow-sm ${
           statsKey > 0 ? "animate-stat-pulse" : ""
         }`}
       >
         <div className="text-center">
-          <div className="text-xl font-extrabold text-success">{numCorrect}/10</div>
+          <div className="text-xl font-extrabold text-success">{numCorrect}/{totalAnswers}</div>
           <div className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider">Correct</div>
         </div>
         <div className="w-px h-8 bg-border" />
-        <div className="text-center">
+        <div className={`text-center ${livesPulse ? "animate-lives-pulse" : ""}`}>
           <LivesIndicator lives={lives} lastLostIndex={lastLostLifeIndex} />
           <div className="text-xs font-bold text-warm-brown/50 uppercase tracking-wider mt-0.5">Lives</div>
         </div>
+        <div className="w-px h-8 bg-border" />
+        <button
+          onClick={() => setSoundEnabled((v) => !v)}
+          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-150 ${
+            soundEnabled ? "text-accent bg-peach/40" : "text-warm-brown/30 hover:text-warm-brown/50"
+          }`}
+          aria-label={soundEnabled ? "Mute sounds" : "Enable sounds"}
+          title={soundEnabled ? "Mute sounds" : "Enable sounds"}
+        >
+          {soundEnabled ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          )}
+        </button>
       </div>
+
+      {/* Progress bar */}
+      <ProgressBar found={numCorrect} total={totalAnswers} />
 
       {/* Guess input */}
       {gameActive && (
-        <GuessInputDropdown
-          verticalSlug={vertical.slug}
-          clientOptions={clientPool}
-          onSubmitGuess={handleGuess}
-          disabled={completed}
-          guessedIds={guessedIds}
-        />
+        <div className={inputWobble ? "animate-wobble" : ""}>
+          <GuessInputDropdown
+            verticalSlug={vertical.slug}
+            clientOptions={clientPool}
+            onSubmitGuess={handleGuess}
+            disabled={completed}
+            guessedIds={guessedIds}
+          />
+        </div>
       )}
 
-      {/* Feedback */}
-      {feedback && (
+      {/* Toast feedback */}
+      {toast && (
         <div
-          className={`text-center py-2.5 px-4 rounded-2xl font-bold text-sm animate-slide-up ${
-            feedback.startsWith("Correct")
+          className={`text-center py-2 px-4 rounded-2xl font-bold text-sm animate-toast ${
+            toast.type === "correct"
               ? "bg-mint text-green-700 border border-green-300/40"
-              : feedback.startsWith("Incorrect")
-                ? "bg-red-50 text-red-600 border border-red-200/40"
-                : "bg-lemon text-yellow-700 border border-yellow-300/40"
+              : "bg-red-50 text-red-600 border border-red-200/40"
           }`}
         >
-          {feedback}
+          {toast.text}
         </div>
       )}
 
       {/* Answer list */}
-      <AnswerList answers={answers} lastCorrectId={lastCorrectId} />
+      <AnswerList answers={answers} lastCorrectId={lastCorrectId} justRevealedId={justRevealedId} />
 
       {/* Give Up button */}
       {gameActive && (
@@ -352,6 +608,7 @@ export function PuzzleView({
         isOpen={showStats}
         onClose={() => setShowStats(false)}
         numCorrect={numCorrect}
+        totalAnswers={totalAnswers}
         numGuesses={numGuesses}
         percentile={percentile}
         scoreHistogram={scoreHistogram}

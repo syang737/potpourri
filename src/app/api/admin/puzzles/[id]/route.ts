@@ -61,9 +61,9 @@ export async function PUT(
 
     // If answers provided, validate and replace them
     if (answers !== undefined) {
-      if (!Array.isArray(answers) || answers.length !== 10) {
+      if (!Array.isArray(answers) || answers.length < 1 || answers.length > 25) {
         return NextResponse.json(
-          { error: "Exactly 10 answers are required" },
+          { error: "Between 1 and 25 answers are required" },
           { status: 400 }
         );
       }
@@ -74,7 +74,7 @@ export async function PUT(
       const poolItems = await prisma.answerPoolItem.findMany({
         where: { id: { in: answerIds }, verticalId: puzzle.verticalId },
       });
-      if (poolItems.length !== 10) {
+      if (poolItems.length !== answers.length) {
         return NextResponse.json(
           { error: "All answers must belong to the puzzle's vertical" },
           { status: 400 }
@@ -84,10 +84,10 @@ export async function PUT(
       const ranks = answers
         .map((a: { rank: number }) => a.rank)
         .sort((a: number, b: number) => a - b);
-      const expectedRanks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const expectedRanks = Array.from({ length: answers.length }, (_, i) => i + 1);
       if (JSON.stringify(ranks) !== JSON.stringify(expectedRanks)) {
         return NextResponse.json(
-          { error: "Answers must have unique ranks 1 through 10" },
+          { error: `Answers must have unique ranks 1 through ${answers.length}` },
           { status: 400 }
         );
       }

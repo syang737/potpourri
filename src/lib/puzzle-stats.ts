@@ -5,9 +5,16 @@ export async function updatePuzzleStats(puzzleId: string) {
     where: { puzzleId, completedAt: { not: null } },
   });
 
+  // Get the puzzle's answer count for histogram range
+  const puzzle = await prisma.puzzle.findUnique({
+    where: { id: puzzleId },
+    include: { answers: true },
+  });
+  const totalAnswers = puzzle?.answers.length ?? 10;
+
   const scoreHistogram: Record<string, number> = {};
   const guessHistogram: Record<string, number> = {};
-  for (let i = 0; i <= 10; i++) scoreHistogram[String(i)] = 0;
+  for (let i = 0; i <= totalAnswers; i++) scoreHistogram[String(i)] = 0;
 
   for (const s of summaries) {
     const key = String(s.numCorrect);
