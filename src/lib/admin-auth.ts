@@ -5,10 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 
 const ADMIN_COOKIE = "admin_session";
 
-// Simple in-memory session store for admin tokens
-// In production, use Redis or DB-backed sessions
-const adminSessions = new Map<string, { userId: string; expiresAt: Date }>();
-
 export async function adminLogin(
   email: string,
   password: string
@@ -25,7 +21,10 @@ export async function adminLogin(
 
   const token = uuidv4();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  adminSessions.set(token, { userId: user.id, expiresAt });
+
+  await prisma.adminSession.create({
+    data: { token, userId: user.id, expiresAt },
+  });
 
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_COOKIE, token, {
@@ -43,7 +42,7 @@ export async function adminLogout(): Promise<void> {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_COOKIE)?.value;
   if (token) {
-    adminSessions.delete(token);
+    await prisma.adminSession.delete({ where: { token } }).catch(() => {});
   }
   cookieStore.delete(ADMIN_COOKIE);
 }
@@ -53,10 +52,10 @@ export async function getAdminUser() {
   const token = cookieStore.get(ADMIN_COOKIE)?.value;
   if (!token) return null;
 
-  const session = adminSessions.get(token);
+  const session = await prisma.adminSession.findUnique({ where: { token } });
   if (!session) return null;
   if (session.expiresAt < new Date()) {
-    adminSessions.delete(token);
+    await prisma.adminSession.delete({ where: { token } }).catch(() => {});
     return null;
   }
 
