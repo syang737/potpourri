@@ -127,6 +127,19 @@ model AdminUser {
   role         AdminRole @default(EDITOR)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  sessions AdminSession[]
+}
+
+model AdminSession {
+  token     String    @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }
 
 enum PuzzleStatus {
