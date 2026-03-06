@@ -57,25 +57,25 @@ export default function AdminPuzzlesPage() {
 
   const statusColors: Record<string, string> = {
     PUBLISHED: "bg-mint text-green-700 border-green-300/40",
-    SCHEDULED: "bg-lemon text-yellow-700 border-yellow-300/40",
     DRAFT: "bg-surface-light text-warm-brown/50 border-border",
-    ARCHIVED: "bg-surface-light text-warm-brown/40 border-border",
   };
 
   const todayET = getTodayET();
 
   // Categorize puzzles
+  // Drafts = anything not published; Upcoming = published + future;
+  // Today = published + today; Past = published + past
   const todayPuzzle: Puzzle[] = [];
   const upcoming: Puzzle[] = [];
   const drafts: Puzzle[] = [];
   const past: Puzzle[] = [];
 
   for (const p of puzzles) {
-    if (p.status === "DRAFT") {
+    if (p.status !== "PUBLISHED") {
       drafts.push(p);
     } else {
       const dateStr = toDateStr(p.scheduledFor);
-      if (dateStr === todayET && p.status === "PUBLISHED") {
+      if (dateStr === todayET) {
         todayPuzzle.push(p);
       } else if (dateStr > todayET) {
         upcoming.push(p);
@@ -119,10 +119,10 @@ export default function AdminPuzzlesPage() {
           <div className="flex items-center gap-2">
             <span
               className={`text-xs font-bold px-2 py-1 rounded-lg border ${
-                statusColors[p.status] ?? statusColors.DRAFT
+                p.status === "PUBLISHED" ? statusColors.PUBLISHED : statusColors.DRAFT
               }`}
             >
-              {p.status}
+              {p.status === "PUBLISHED" ? "Published" : "Draft"}
             </span>
           </div>
         </div>
