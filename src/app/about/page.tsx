@@ -8,8 +8,8 @@ export default function AboutPage() {
         <h1 className="text-3xl font-extrabold text-warm-brown">About Potpourri</h1>
       </div>
       <p className="text-foreground/80 leading-relaxed font-semibold">
-        Potpourri is a daily &ldquo;top ten&rdquo; trivia game. Each day, a new
-        puzzle challenges you to guess the top ten items for a given topic —
+        Potpourri is a daily trivia game. Each day, a new
+        puzzle challenges you to guess the top items for a given topic —
         from countries and languages to movies, sports, and Fortune 500
         companies.
       </p>
@@ -24,7 +24,7 @@ export default function AboutPage() {
           </li>
           <li className="flex gap-3">
             <span className="text-accent font-extrabold flex-shrink-0">2.</span>
-            Each correct guess reveals its position in the top ten.
+            Each correct guess reveals its position in the rankings.
           </li>
           <li className="flex gap-3">
             <span className="text-accent font-extrabold flex-shrink-0">3.</span>
