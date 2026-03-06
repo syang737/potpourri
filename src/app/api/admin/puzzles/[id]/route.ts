@@ -125,3 +125,41 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+
+    const { id } = await params;
+    const puzzle = await prisma.puzzle.findUnique({ where: { id } });
+
+    if (!puzzle) {
+      return NextResponse.json({ error: "Puzzle not found" }, { status: 404 });
+    }
+
+    // Delete all related records in a transaction
+    await prisma.$transaction([
+      prisma.guessLog.deleteMany({ where: { puzzleId: id } }),
+      prisma.sessionPuzzleSummary.deleteMany({ where: { puzzleId: id } }),
+      prisma.puzzleStats.deleteMany({ where: { puzzleId: id } }),
+      prisma.puzzleAnswer.deleteMany({ where: { puzzleId: id } }),
+      prisma.puzzle.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("Admin puzzle DELETE error:", err);
+    return NextResponse.json(
+      { error: `Server error: ${message}` },
+      { status: 500 }
+    );
+  }
+}
