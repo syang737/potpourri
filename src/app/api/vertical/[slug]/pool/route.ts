@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, withRetry } from "@/lib/prisma";
 
 interface CachedPool {
   items: { id: string; label: string; normalizedLabel: string; metadata: unknown }[];
@@ -29,30 +29,32 @@ export async function GET(
       );
     }
 
-    const vertical = await prisma.vertical.findUnique({
-      where: { slug },
-    });
+    return await withRetry(async () => {
+      const vertical = await prisma.vertical.findUnique({
+        where: { slug },
+      });
 
-    if (!vertical) {
-      return NextResponse.json({ error: "Vertical not found" }, { status: 404 });
-    }
-
-    const items = await prisma.answerPoolItem.findMany({
-      where: { verticalId: vertical.id },
-      select: { id: true, label: true, normalizedLabel: true, metadata: true },
-      orderBy: { label: "asc" },
-    });
-
-    poolCache.set(slug, { items, fetchedAt: now });
-
-    return NextResponse.json(
-      { items },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=3600, stale-while-revalidate=1800",
-        },
+      if (!vertical) {
+        return NextResponse.json({ error: "Vertical not found" }, { status: 404 });
       }
-    );
+
+      const items = await prisma.answerPoolItem.findMany({
+        where: { verticalId: vertical.id },
+        select: { id: true, label: true, normalizedLabel: true, metadata: true },
+        orderBy: { label: "asc" },
+      });
+
+      poolCache.set(slug, { items, fetchedAt: now });
+
+      return NextResponse.json(
+        { items },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=3600, stale-while-revalidate=1800",
+          },
+        }
+      );
+    });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Internal server error";
